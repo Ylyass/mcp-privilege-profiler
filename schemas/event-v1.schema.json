@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcp-privilege-profiler.dev/schemas/event-v1.schema.json",
+  "title": "MCP Privilege Profiler event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_schema_version",
+    "event_type",
+    "timestamp",
+    "trace_id",
+    "task_id",
+    "task_type",
+    "agent_id",
+    "server_id",
+    "server_trust",
+    "tool_name",
+    "tool_effect",
+    "decision",
+    "reason_code",
+    "primary_risk_category",
+    "audit_status"
+  ],
+  "properties": {
+    "event_schema_version": { "const": "1.0" },
+    "event_type": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "trace_id": { "type": "string", "minLength": 1 },
+    "task_id": { "type": "string", "minLength": 1 },
+    "task_type": { "type": "string", "minLength": 1 },
+    "agent_id": { "type": "string", "minLength": 1 },
+    "server_id": { "type": "string", "minLength": 1 },
+    "server_trust": { "enum": ["approved", "unapproved"] },
+    "tool_name": { "type": "string", "minLength": 1 },
+    "tool_fingerprint": {
+      "type": ["string", "null"],
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "policy_id": { "type": ["string", "null"] },
+    "tool_effect": { "enum": ["ALLOW", "REQUIRE_APPROVAL", "DENY"] },
+    "decision": { "enum": ["allowed", "denied", "approval_required"] },
+    "reason_code": { "type": "string", "minLength": 1 },
+    "primary_risk_category": { "type": "string", "minLength": 1 },
+    "audit_status": { "enum": ["written", "failed"] },
+    "duration_ms": { "type": ["integer", "null"], "minimum": 0 },
+    "argument_key_names": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "argument_size_bytes": { "type": ["integer", "null"], "minimum": 0 },
+    "path_root_alias": { "type": ["string", "null"] },
+    "url_scheme": { "type": ["string", "null"] },
+    "url_host": { "type": ["string", "null"] }
+  }
+}
+

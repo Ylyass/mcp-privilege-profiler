@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcp-privilege-profiler.dev/schemas/policy-v1.schema.json",
+  "title": "MCP Privilege Profiler policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policy_version",
+    "policy_id",
+    "task_type",
+    "server_id",
+    "approved_toolset_fingerprint",
+    "reviewed_profile_id",
+    "tools"
+  ],
+  "properties": {
+    "policy_version": { "const": 1 },
+    "policy_id": { "type": "string", "minLength": 1 },
+    "task_type": { "type": "string", "minLength": 1 },
+    "server_id": { "type": "string", "minLength": 1 },
+    "approved_toolset_fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "reviewed_profile_id": { "type": "string", "minLength": 1 },
+    "tools": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tool_name", "effect"],
+        "properties": {
+          "tool_name": { "type": "string", "minLength": 1 },
+          "effect": {
+            "enum": ["ALLOW", "REQUIRE_APPROVAL", "DENY"]
+          }
+        }
+      }
+    }
+  }
+}
+

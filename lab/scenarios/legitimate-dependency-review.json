@@ -1,0 +1,11 @@
+{
+  "scenario_id": "legitimate-dependency-review",
+  "task_type": "dependency-review",
+  "expected_calls": [
+    "list_fixture_directory",
+    "read_fixture",
+    "fetch_fixture_advisory"
+  ],
+  "forbidden_calls": []
+}
+
