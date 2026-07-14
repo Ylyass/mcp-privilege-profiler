@@ -35,6 +35,17 @@ verified with an unresponsive child fixture that is terminated during cleanup.
 Malformed downstream JSON-RPC closes the downstream session and is exposed only
 as the stable MCP_PRIVPROF_DOWNSTREAM_UNAVAILABLE reason code.
 
+## Inventory and drift foundation
+
+Inventory collection follows every tools/list page, rejects cursor cycles,
+rejects duplicate tool names, and caps a catalog at 100 pages. Complete known
+Tool objects are serialized with aliases, canonicalized with RFC 8785, and
+hashed with SHA-256. The toolset digest is independent of catalog ordering.
+
+Drift comparison is conservative: additions are security widening, removals are
+breaking, any inputSchema change is security widening, presentation-only fields
+are informational, and other changed fields require review.
+
 Policy, catalog filtering, profiling, drift detection, limits, and audit events
 are not active yet. They will be inserted between the upstream handlers and the
 downstream session only after transparent transport is proven.

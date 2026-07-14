@@ -16,3 +16,5 @@ All notable changes are documented here.
   process that never completes MCP initialization.
 - Added strict downstream message parsing so malformed JSON-RPC fails closed
   with a stable, non-sensitive error.
+- Added complete paginated tool inventory, RFC 8785/SHA-256 fingerprints, and
+  conservative drift classification.
