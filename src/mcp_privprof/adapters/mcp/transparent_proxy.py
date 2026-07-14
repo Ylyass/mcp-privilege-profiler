@@ -9,14 +9,45 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from math import isfinite
 from pathlib import Path
 from typing import cast
 
+import anyio
 import mcp.types as types
+from anyio.abc import ObjectReceiveStream
+from anyio.streams.memory import MemoryObjectReceiveStream
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
+from mcp.shared.exceptions import McpError
+from mcp.shared.message import SessionMessage
+
+
+class DownstreamProtocolError(RuntimeError):
+    """The downstream emitted bytes that are not a valid MCP message."""
+
+
+class StrictMessageStream(ObjectReceiveStream[SessionMessage | Exception]):
+    """Convert parser exception items into a closed downstream session."""
+
+    def __init__(
+        self,
+        source: ObjectReceiveStream[SessionMessage | Exception],
+    ) -> None:
+        self._source = source
+
+    async def receive(self) -> SessionMessage | Exception:
+        """Receive one valid message or fail the downstream protocol."""
+        item = await self._source.receive()
+        if isinstance(item, Exception):
+            raise DownstreamProtocolError("downstream emitted malformed MCP data") from item
+        return item
+
+    async def aclose(self) -> None:
+        """Close the wrapped receive stream."""
+        await self._source.aclose()
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,10 +57,16 @@ class DownstreamProcess:
     command: str
     args: tuple[str, ...] = ()
     cwd: Path | None = None
+    startup_timeout_seconds: float = 10.0
+    call_timeout_seconds: float = 30.0
 
     def __post_init__(self) -> None:
-        if not self.command:
+        if not self.command.strip():
             raise ValueError("downstream command must not be empty")
+        if not isfinite(self.startup_timeout_seconds) or self.startup_timeout_seconds <= 0:
+            raise ValueError("startup timeout must be positive and finite")
+        if not isfinite(self.call_timeout_seconds) or self.call_timeout_seconds <= 0:
+            raise ValueError("call timeout must be positive and finite")
 
 
 @dataclass(slots=True)
@@ -51,12 +88,20 @@ def create_transparent_proxy(
             args=list(process.args),
             cwd=process.cwd,
         )
-        async with (
-            stdio_client(parameters) as streams,
-            ClientSession(*streams) as downstream,
-        ):
-            await downstream.initialize()
-            yield ProxyContext(downstream=downstream)
+        async with stdio_client(parameters) as streams:
+            # ClientSession 1.28.1 is typed against the concrete memory stream
+            # although it consumes only the ObjectReceiveStream interface.
+            strict_read = cast(
+                MemoryObjectReceiveStream[SessionMessage | Exception],
+                StrictMessageStream(streams[0]),
+            )
+            async with ClientSession(strict_read, streams[1]) as downstream:
+                try:
+                    with anyio.fail_after(process.startup_timeout_seconds):
+                        await downstream.initialize()
+                except TimeoutError as exc:
+                    raise RuntimeError("downstream MCP initialization timed out") from exc
+                yield ProxyContext(downstream=downstream)
 
     proxy = Server[ProxyContext](
         name="mcp-privilege-profiler-proxy",
@@ -84,11 +129,30 @@ def create_transparent_proxy(
     ) -> types.CallToolResult:
         """Forward a validated tool call and preserve its complete result."""
         context = proxy.request_context.lifespan_context
-        return await context.downstream.call_tool(name=name, arguments=arguments)
+        try:
+            with anyio.fail_after(process.call_timeout_seconds):
+                return await context.downstream.call_tool(name=name, arguments=arguments)
+        except TimeoutError:
+            return _infrastructure_error("MCP_PRIVPROF_DOWNSTREAM_TIMEOUT")
+        except (
+            McpError,
+            anyio.BrokenResourceError,
+            anyio.ClosedResourceError,
+            anyio.EndOfStream,
+        ):
+            return _infrastructure_error("MCP_PRIVPROF_DOWNSTREAM_UNAVAILABLE")
 
     proxy.list_tools()(list_tools)
     proxy.call_tool(validate_input=True)(call_tool)
     return proxy
+
+
+def _infrastructure_error(reason_code: str) -> types.CallToolResult:
+    """Return a stable error without leaking downstream exception details."""
+    return types.CallToolResult(
+        content=[types.TextContent(type="text", text=reason_code)],
+        isError=True,
+    )
 
 
 async def run_transparent_proxy(process: DownstreamProcess) -> None:

@@ -25,8 +25,16 @@ The Stage 4 proxy is intentionally transparent:
 - tools/call arguments are validated against the listed input schema;
 - the complete downstream CallToolResult is returned;
 - downstream MCP tool errors remain tool errors.
+- initialization and calls have positive finite timeouts;
+- call timeout and connection loss use stable, non-sensitive reason codes;
+- cancellation is not converted into a result and can propagate upstream;
+- SDK shutdown closes stdin, waits, then terminates the child process tree.
+
+Pagination is verified with a two-page downstream fixture. Startup timeout is
+verified with an unresponsive child fixture that is terminated during cleanup.
+Malformed downstream JSON-RPC closes the downstream session and is exposed only
+as the stable MCP_PRIVPROF_DOWNSTREAM_UNAVAILABLE reason code.
 
 Policy, catalog filtering, profiling, drift detection, limits, and audit events
 are not active yet. They will be inserted between the upstream handlers and the
 downstream session only after transparent transport is proven.
-
