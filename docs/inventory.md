@@ -33,7 +33,10 @@ be positive and finite.
 
 ## Stored evidence
 
-SQLite schema version 1 contains:
+Inventory tables were introduced by SQLite migration 1. The current combined
+database is schema version 2 because migration 2 adds profiling and review
+tables without changing or deleting inventory history. Inventory storage
+contains:
 
 - one append-only row per complete catalog observation;
 - the exact server ID, observation timestamp, tool count, and toolset fingerprint;
@@ -82,5 +85,5 @@ the protocol notification is not a delta: every refresh asks for the entire
 current catalog. A refresh failure propagates to the owning task group and is
 not silently ignored.
 
-The current public inventory command is a one-shot scan. Live monitoring is a
-verified component for the later long-running profile and enforce modes.
+The public inventory command is a one-shot scan. Profile mode now uses live
+monitoring to invalidate changed catalogs; enforce mode will reuse it in Stage 7.

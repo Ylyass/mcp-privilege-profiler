@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcp-privilege-profiler.dev/schemas/profile-evidence-v1.schema.json",
+  "title": "MCP Privilege Profiler sealed profile evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_schema_version",
+    "generated_at",
+    "evidence_fingerprint",
+    "profile_id",
+    "profile_status",
+    "task_type",
+    "agent_id",
+    "server_id",
+    "toolset_fingerprint",
+    "created_at",
+    "sealed_at",
+    "planned_scenarios",
+    "completed_scenarios",
+    "scenario_coverage",
+    "completed_run_count",
+    "aborted_run_count",
+    "runs",
+    "tools"
+  ],
+  "properties": {
+    "report_schema_version": { "const": "1.0" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "evidence_fingerprint": { "$ref": "#/$defs/fingerprint" },
+    "profile_id": { "type": "string", "minLength": 1 },
+    "profile_status": { "const": "SEALED" },
+    "task_type": { "type": "string", "minLength": 1 },
+    "agent_id": { "type": "string", "minLength": 1 },
+    "server_id": { "type": "string", "minLength": 1 },
+    "toolset_fingerprint": { "$ref": "#/$defs/fingerprint" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "sealed_at": { "type": "string", "format": "date-time" },
+    "planned_scenarios": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "completed_scenarios": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "scenario_coverage": { "type": "number", "minimum": 0, "maximum": 1 },
+    "completed_run_count": { "type": "integer", "minimum": 0 },
+    "aborted_run_count": { "type": "integer", "minimum": 0 },
+    "runs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/run" }
+    },
+    "tools": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/toolEvidence" }
+    }
+  },
+  "$defs": {
+    "fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run_id", "scenario_id", "status"],
+      "properties": {
+        "run_id": { "type": "string", "minLength": 1 },
+        "scenario_id": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["COMPLETED", "ABORTED"] }
+      }
+    },
+    "toolEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_name",
+        "available",
+        "fingerprint",
+        "attempted_count",
+        "successful_count",
+        "failed_count",
+        "incomplete_count",
+        "qualifying_successful_count",
+        "successful_runs",
+        "successful_scenarios",
+        "evidence_tier",
+        "recommendation"
+      ],
+      "properties": {
+        "tool_name": { "type": "string", "minLength": 1 },
+        "available": { "type": "boolean" },
+        "fingerprint": {
+          "oneOf": [
+            { "$ref": "#/$defs/fingerprint" },
+            { "type": "null" }
+          ]
+        },
+        "attempted_count": { "type": "integer", "minimum": 0 },
+        "successful_count": { "type": "integer", "minimum": 0 },
+        "failed_count": { "type": "integer", "minimum": 0 },
+        "incomplete_count": { "type": "integer", "minimum": 0 },
+        "qualifying_successful_count": { "type": "integer", "minimum": 0 },
+        "successful_runs": { "type": "integer", "minimum": 0 },
+        "successful_scenarios": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "evidence_tier": { "enum": ["strong", "moderate", "weak", "unobserved"] },
+        "recommendation": {
+          "enum": ["consider_allow", "no_successful_evidence", "investigate_unlisted"]
+        }
+      }
+    }
+  }
+}

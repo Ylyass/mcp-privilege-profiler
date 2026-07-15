@@ -17,9 +17,10 @@ type ClientIncomingMessage = (
 class ToolListChangedMonitor:
     """Coalesce catalog-change signals and refresh outside the MCP receive loop."""
 
-    def __init__(self) -> None:
+    def __init__(self, on_signal: Callable[[], None] | None = None) -> None:
         self._sender, self._receiver = anyio.create_memory_object_stream[None](max_buffer_size=1)
         self._running = False
+        self._on_signal = on_signal
 
     async def handle_message(self, message: ClientIncomingMessage) -> None:
         """Queue a signal without waiting for catalog I/O on the receive loop."""
@@ -27,6 +28,8 @@ class ToolListChangedMonitor:
             message.root,
             types.ToolListChangedNotification,
         ):
+            if self._on_signal is not None:
+                self._on_signal()
             try:
                 self._sender.send_nowait(None)
             except anyio.WouldBlock:

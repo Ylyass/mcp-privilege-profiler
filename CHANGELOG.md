@@ -24,3 +24,13 @@ All notable changes are documented here.
   `mcp-privprof inventory` command.
 - Added non-blocking `notifications/tools/list_changed` refresh handling and a
   real MCP catalog-change integration fixture.
+- Added launch-bound profiles, labeled scenario runs, and SQLite schema
+  migration 2 with privacy-safe call facts.
+- Added sealed `profile-evidence-v1` reports, deterministic candidate evidence
+  tiers, and explicitly non-authorizing Markdown guidance.
+- Added deny-by-default `review-decisions-v1` templates and exact human review
+  coverage bound to the sealed evidence and toolset fingerprints.
+- Added public profile, review, recovery, and policy-generation CLI workflows;
+  policy generation has no path around a completed review.
+- Added real MCP integration proof for successful observation, cancellation,
+  fail-closed live catalog drift, argument non-persistence, and review gating.

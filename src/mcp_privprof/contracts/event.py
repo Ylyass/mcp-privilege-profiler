@@ -38,4 +38,3 @@ class AuditEventV1(BaseModel):
     path_root_alias: str | None = None
     url_scheme: str | None = None
     url_host: str | None = None
-

@@ -8,7 +8,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.strategies import SearchStrategy
 
-from mcp_privprof.adapters.mcp.inventory import JsonValue, fingerprint_json
+from mcp_privprof.application.fingerprints import JsonValue, fingerprint_json
 
 JSON_VALUES = cast(
     SearchStrategy[JsonValue],
@@ -31,10 +31,7 @@ JSON_VALUES = cast(
 def reverse_object_keys(value: JsonValue) -> JsonValue:
     """Recursively rebuild every object in reverse insertion order."""
     if isinstance(value, dict):
-        return {
-            key: reverse_object_keys(value[key])
-            for key in reversed(tuple(value.keys()))
-        }
+        return {key: reverse_object_keys(value[key]) for key in reversed(tuple(value.keys()))}
     if isinstance(value, list):
         return [reverse_object_keys(item) for item in value]
     return value
@@ -46,9 +43,7 @@ def test_fingerprint_is_invariant_to_recursive_object_key_order(
 ) -> None:
     """Object insertion order never creates a different canonical digest."""
     canonical, fingerprint = fingerprint_json(document)
-    reordered_canonical, reordered_fingerprint = fingerprint_json(
-        reverse_object_keys(document)
-    )
+    reordered_canonical, reordered_fingerprint = fingerprint_json(reverse_object_keys(document))
 
     assert canonical == reordered_canonical
     assert fingerprint == reordered_fingerprint

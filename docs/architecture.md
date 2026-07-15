@@ -1,6 +1,6 @@
 # Architecture
 
-## Current verified path
+## Verified transport foundation
 
     MCP test client
       -> stdio
@@ -16,7 +16,7 @@ The proxy process is both:
 The downstream command and argument list are passed directly to the process
 launcher. They are not joined into a shell command.
 
-## Current behavior
+## Transparent-mode behavior
 
 The Stage 4 proxy is intentionally transparent:
 
@@ -67,10 +67,58 @@ message handler could deadlock the SDK receive loop that must deliver the
 response.
 
 The one-shot inventory CLI exits after its report and therefore does not wait
-for later notifications. The monitor is verified separately through a real
-long-running MCP integration test and will be composed into later proxy modes.
+for later notifications. Profile mode composes the same verified monitor into
+its long-running proxy.
 
-Policy enforcement, catalog filtering, profiling, enforcement response to
-drift, limits, and audit events are not active yet. Inventory drift is currently
-evidence for the operator; Stage 7 will make security-widening drift fail closed
-in enforce mode.
+## Profile, review, and policy path
+
+    trusted CLI labels + fresh inventory snapshot
+      -> open profile bound to exact toolset fingerprint
+      -> one or more labeled MCP proxy runs
+      -> privacy-safe call facts in SQLite
+      -> sealed profile-evidence-v1 report
+      -> exact human decision for every available tool
+      -> completed review bound to evidence fingerprint
+      -> policy-v1 artifact bound to profile and toolset
+
+The application separates four facts that must not be collapsed:
+
+1. a tool was available in the catalog;
+2. an agent attempted the tool;
+3. the tool succeeded during a completed labeled scenario;
+4. a human selected a policy effect.
+
+Only the fourth fact can produce an `ALLOW`, `REQUIRE_APPROVAL`, or `DENY`
+policy rule. Candidate evidence uses non-authorizing language.
+
+The profile proxy stores an attempt before forwarding. The `profile_calls`
+table contains only call ID, run ID, tool name, attempt time, outcome, and
+completion time. Arguments and results cross the proxy in memory but have no
+profile persistence fields.
+
+At profile creation, trusted task, agent, server, and scenario labels are bound
+to a fresh inventory snapshot. At run startup, the proxy recollects the catalog
+and requires the exact same fingerprint. A live list-changed notification
+invalidates the gate immediately; a background full refresh can revalidate only
+an exact match. This prevents mixed-catalog evidence.
+
+Sealing is one-way and requires no open runs plus at least one completed run.
+The review input must cover every available tool exactly once and match the
+sealed evidence fingerprint. Policy generation reloads and fingerprints the
+evidence again, so a stale or substituted review cannot generate policy.
+
+## Layer responsibilities
+
+| Layer | Responsibility |
+|---|---|
+| Domain | Profile/run state machines, exact review coverage, default-deny policy facts |
+| Application | Evidence aggregation, deterministic fingerprints, lifecycle orchestration |
+| Ports | Storage interfaces independent of SQLite |
+| MCP adapters | Strict downstream session, proxy forwarding, catalog invalidation |
+| SQLite adapters | Atomic migrations and privacy-safe durable state |
+| Contracts | Strict versioned JSON evidence, review, policy, and event models |
+| CLI | Trusted composition, bounded file input, atomic artifact writes |
+
+Policy enforcement, catalog filtering by policy, argument constraints, limits,
+and mandatory audit events are not active yet. Stage 7 will consume the reviewed
+policy and make authorization decisions before forwarding.

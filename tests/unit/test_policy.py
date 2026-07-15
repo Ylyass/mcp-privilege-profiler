@@ -14,6 +14,7 @@ def make_policy(*rules: PolicyRule) -> Policy:
         task_type="dependency-review",
         server_id="lab",
         approved_toolset_fingerprint=f"sha256:{'a' * 64}",
+        reviewed_profile_id="profile-1",
         rules=rules,
     )
 
@@ -53,3 +54,15 @@ def test_duplicate_identity_is_rejected() -> None:
             PolicyRule(identity, PolicyEffect.DENY),
         )
 
+
+def test_policy_rejects_malformed_toolset_fingerprint() -> None:
+    """The domain requires the same exact digest shape as policy-v1."""
+    with pytest.raises(ValueError, match="lowercase SHA-256"):
+        Policy(
+            policy_id="policy-1",
+            task_type="dependency-review",
+            server_id="lab",
+            approved_toolset_fingerprint="sha256:not-a-digest",
+            reviewed_profile_id="profile-1",
+            rules=(),
+        )

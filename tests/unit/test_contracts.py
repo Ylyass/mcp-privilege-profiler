@@ -63,6 +63,8 @@ def test_event_contract_forbids_raw_argument_field() -> None:
         "policy-v1.schema.json",
         "event-v1.schema.json",
         "inventory-report-v1.schema.json",
+        "profile-evidence-v1.schema.json",
+        "review-decisions-v1.schema.json",
     ],
 )
 def test_public_schema_is_valid_json_schema(schema_name: str) -> None:

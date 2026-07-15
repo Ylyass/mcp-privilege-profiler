@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
+from re import fullmatch
 
 
 class PolicyEffect(StrEnum):
@@ -50,6 +51,7 @@ class Policy:
     task_type: str
     server_id: str
     approved_toolset_fingerprint: str
+    reviewed_profile_id: str
     rules: tuple[PolicyRule, ...]
 
     def __post_init__(self) -> None:
@@ -59,8 +61,10 @@ class Policy:
             raise ValueError("task_type must not be empty")
         if not self.server_id:
             raise ValueError("server_id must not be empty")
-        if not self.approved_toolset_fingerprint.startswith("sha256:"):
-            raise ValueError("approved_toolset_fingerprint must start with sha256:")
+        if not self.reviewed_profile_id:
+            raise ValueError("reviewed_profile_id must not be empty")
+        if fullmatch(r"sha256:[0-9a-f]{64}", self.approved_toolset_fingerprint) is None:
+            raise ValueError("approved_toolset_fingerprint must be a lowercase SHA-256 fingerprint")
 
         identities = [rule.identity for rule in self.rules]
         if len(identities) != len(set(identities)):
@@ -87,4 +91,3 @@ class Policy:
             effect=PolicyEffect.DENY,
             reason_code="NO_EXACT_POLICY_RULE",
         )
-

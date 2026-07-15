@@ -109,7 +109,7 @@ async def test_repository_rejects_database_from_newer_software(tmp_path: Path) -
             "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)"
         )
         database.execute(
-            "INSERT INTO schema_migrations(version, applied_at) VALUES (2, '2026-07-15T00:00:00Z')"
+            "INSERT INTO schema_migrations(version, applied_at) VALUES (3, '2026-07-15T00:00:00Z')"
         )
 
     repository = SqliteInventoryRepository(database_path)

@@ -38,4 +38,3 @@ class PolicyV1(BaseModel):
         if len(names) != len(set(names)):
             raise ValueError("tools must not contain duplicate tool_name values")
         return self
-

@@ -85,4 +85,3 @@ async def test_proxy_preserves_downstream_tool_error(
     assert len(result.content) == 1
     assert isinstance(result.content[0], TextContent)
     assert "fixture does not exist" in result.content[0].text
-

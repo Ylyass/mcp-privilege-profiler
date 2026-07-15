@@ -8,11 +8,8 @@ from hashlib import sha256
 import mcp.types as types
 import pytest
 
-from mcp_privprof.adapters.mcp.inventory import (
-    fingerprint_json,
-    snapshot_tool,
-    snapshot_toolset,
-)
+from mcp_privprof.adapters.mcp.inventory import snapshot_tool, snapshot_toolset
+from mcp_privprof.application.fingerprints import fingerprint_json
 from mcp_privprof.domain import DriftKind, DriftSeverity, ToolSnapshot, compare_toolsets
 
 

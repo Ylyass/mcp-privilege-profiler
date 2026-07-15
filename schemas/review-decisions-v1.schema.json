@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcp-privilege-profiler.dev/schemas/review-decisions-v1.schema.json",
+  "title": "MCP Privilege Profiler human review decisions v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["review_schema_version", "profile_id", "evidence_fingerprint", "decisions"],
+  "properties": {
+    "review_schema_version": { "const": "1.0" },
+    "profile_id": { "type": "string", "minLength": 1 },
+    "evidence_fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "decisions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tool_name", "effect"],
+        "properties": {
+          "tool_name": { "type": "string", "minLength": 1 },
+          "effect": { "enum": ["ALLOW", "REQUIRE_APPROVAL", "DENY"] }
+        }
+      }
+    }
+  }
+}

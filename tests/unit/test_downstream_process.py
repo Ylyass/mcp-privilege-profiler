@@ -28,4 +28,3 @@ def test_invalid_call_timeout_is_rejected(timeout: float) -> None:
     """Tool-call waits must always be positive and finite."""
     with pytest.raises(ValueError, match="call timeout"):
         DownstreamProcess(command="python", call_timeout_seconds=timeout)
-

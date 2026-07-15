@@ -62,4 +62,3 @@ def test_simulated_post_does_not_store_payload(lab_tools: LabTools) -> None:
 
     assert result == "SIMULATED_ONLY destination_length=23 payload_bytes=13"
     assert not lab_tools.sandbox_root.exists()
-

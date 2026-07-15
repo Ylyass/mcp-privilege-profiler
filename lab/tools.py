@@ -90,4 +90,3 @@ class LabTools:
             "SIMULATED_ONLY "
             f"destination_length={len(destination)} payload_bytes={len(payload.encode('utf-8'))}"
         )
-

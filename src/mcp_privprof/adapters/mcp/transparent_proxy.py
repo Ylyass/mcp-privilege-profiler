@@ -18,6 +18,7 @@ import mcp.types as types
 from anyio.abc import ObjectReceiveStream
 from anyio.streams.memory import MemoryObjectReceiveStream
 from mcp import ClientSession, StdioServerParameters
+from mcp.client.session import MessageHandlerFnT
 from mcp.client.stdio import stdio_client
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
@@ -79,6 +80,8 @@ class ProxyContext:
 @asynccontextmanager
 async def open_downstream_session(
     process: DownstreamProcess,
+    *,
+    message_handler: MessageHandlerFnT | None = None,
 ) -> AsyncGenerator[ClientSession]:
     """Open and initialize one strict downstream stdio MCP session."""
     parameters = StdioServerParameters(
@@ -93,7 +96,11 @@ async def open_downstream_session(
             MemoryObjectReceiveStream[SessionMessage | Exception],
             StrictMessageStream(streams[0]),
         )
-        async with ClientSession(strict_read, streams[1]) as downstream:
+        async with ClientSession(
+            strict_read,
+            streams[1],
+            message_handler=message_handler,
+        ) as downstream:
             try:
                 with anyio.fail_after(process.startup_timeout_seconds):
                     await downstream.initialize()

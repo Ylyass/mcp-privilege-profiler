@@ -5,4 +5,6 @@ consequences. Decisions are changed by a superseding ADR, not silently edited.
 
 - [0001: One downstream stdio server](0001-one-downstream-stdio-server.md)
 - [0002: Stable MCP v1 only](0002-stable-mcp-v1-only.md)
+- [0003: Launch-bound profile context](0003-launch-bound-profile-context.md)
+- [0004: Sealed evidence and exact human review gate](0004-reviewed-evidence-gate.md)
 - [0005: RFC 8785 complete-tool fingerprints](0005-rfc8785-tool-fingerprints.md)

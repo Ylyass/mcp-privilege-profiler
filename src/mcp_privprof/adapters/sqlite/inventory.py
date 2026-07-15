@@ -9,46 +9,8 @@ from typing import cast
 import aiosqlite
 import anyio
 
+from mcp_privprof.adapters.sqlite.database import configure_database, initialize_database
 from mcp_privprof.domain.inventory import StoredToolsetSnapshot, ToolsetSnapshot, ToolSnapshot
-
-SCHEMA_VERSION = 1
-
-_CREATE_MIGRATIONS = """
-CREATE TABLE IF NOT EXISTS schema_migrations (
-    version INTEGER PRIMARY KEY,
-    applied_at TEXT NOT NULL
-)
-"""
-
-_CREATE_SNAPSHOTS = """
-CREATE TABLE inventory_snapshots (
-    snapshot_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    server_id TEXT NOT NULL CHECK (length(server_id) > 0),
-    fingerprint TEXT NOT NULL CHECK (
-        length(fingerprint) = 71
-        AND substr(fingerprint, 1, 7) = 'sha256:'
-        AND substr(fingerprint, 8) NOT GLOB '*[^0-9a-f]*'
-    ),
-    captured_at TEXT NOT NULL,
-    tool_count INTEGER NOT NULL CHECK (tool_count >= 0)
-)
-"""
-
-_CREATE_TOOLS = """
-CREATE TABLE inventory_tools (
-    snapshot_id INTEGER NOT NULL REFERENCES inventory_snapshots(snapshot_id) ON DELETE CASCADE,
-    ordinal INTEGER NOT NULL CHECK (ordinal >= 0),
-    name TEXT NOT NULL CHECK (length(name) > 0),
-    fingerprint TEXT NOT NULL CHECK (
-        length(fingerprint) = 71
-        AND substr(fingerprint, 1, 7) = 'sha256:'
-        AND substr(fingerprint, 8) NOT GLOB '*[^0-9a-f]*'
-    ),
-    canonical_json BLOB NOT NULL,
-    PRIMARY KEY (snapshot_id, name),
-    UNIQUE (snapshot_id, ordinal)
-)
-"""
 
 
 class SqliteInventoryRepository:
@@ -61,38 +23,7 @@ class SqliteInventoryRepository:
 
     async def initialize(self) -> None:
         """Apply known migrations atomically and reject newer databases."""
-        async with aiosqlite.connect(self._database_path) as database:
-            await _configure(database)
-            await database.execute("BEGIN IMMEDIATE")
-            try:
-                await database.execute(_CREATE_MIGRATIONS)
-                cursor = await database.execute(
-                    "SELECT COALESCE(MAX(version), 0) FROM schema_migrations"
-                )
-                row = await cursor.fetchone()
-                await cursor.close()
-                current_version = int(row[0]) if row is not None else 0
-                if current_version > SCHEMA_VERSION:
-                    raise RuntimeError(
-                        f"inventory database schema {current_version} is newer than supported "
-                        f"schema {SCHEMA_VERSION}"
-                    )
-                if current_version < 1:
-                    await database.execute(_CREATE_SNAPSHOTS)
-                    await database.execute(_CREATE_TOOLS)
-                    await database.execute(
-                        "CREATE INDEX inventory_snapshots_server_latest "
-                        "ON inventory_snapshots(server_id, snapshot_id DESC)"
-                    )
-                    await database.execute(
-                        "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
-                        (1, _format_timestamp(datetime.now(UTC))),
-                    )
-                await database.commit()
-            except BaseException:
-                with anyio.CancelScope(shield=True):
-                    await database.rollback()
-                raise
+        await initialize_database(self._database_path)
 
     async def save(
         self,
@@ -102,7 +33,7 @@ class SqliteInventoryRepository:
         """Append a snapshot and all canonical Tool objects in one transaction."""
         timestamp = _format_timestamp(captured_at)
         async with aiosqlite.connect(self._database_path) as database:
-            await _configure(database)
+            await configure_database(database)
             await database.execute("BEGIN IMMEDIATE")
             try:
                 cursor = await database.execute(
@@ -165,7 +96,7 @@ class SqliteInventoryRepository:
             raise ValueError("history limit must be positive")
 
         async with aiosqlite.connect(self._database_path) as database:
-            await _configure(database)
+            await configure_database(database)
             cursor = await database.execute(
                 """
                 SELECT snapshot_id, server_id, fingerprint, captured_at, tool_count
@@ -180,11 +111,6 @@ class SqliteInventoryRepository:
             await cursor.close()
             rows = [cast(tuple[object, ...], row) for row in raw_rows]
             return tuple([await _load_snapshot(database, row) for row in rows])
-
-
-async def _configure(database: aiosqlite.Connection) -> None:
-    await database.execute("PRAGMA foreign_keys = ON")
-    await database.execute("PRAGMA busy_timeout = 5000")
 
 
 async def _load_snapshot(

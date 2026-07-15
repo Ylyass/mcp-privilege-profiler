@@ -30,11 +30,15 @@ The current verified build includes:
 - complete paginated tool inventory with RFC 8785 and SHA-256 fingerprints;
 - append-only SQLite inventory history and conservative drift classification;
 - versioned JSON and human-readable Markdown inventory reports;
-- non-blocking handling of `notifications/tools/list_changed` for long-running sessions.
+- non-blocking handling of `notifications/tools/list_changed` for long-running sessions;
+- trusted, launch-bound profiles and labeled scenario runs;
+- privacy-safe call evidence containing names, times, and outcomes only;
+- sealed evidence reports with reproducible candidate tiers;
+- deny-by-default human review files and review-gated policy generation.
 
-Profiling, human review, enforcement, limits, audit delivery, Wazuh content, CI,
-and release publication are not implemented yet. See the [roadmap](docs/roadmap.md)
-for the order and current boundary.
+Enforcement, limits, audit delivery, Wazuh content, hosted CI, and release
+publication are not implemented yet. See the [roadmap](docs/roadmap.md) for the
+order and current boundary.
 
 ## Current commands
 
@@ -53,10 +57,27 @@ the previous observation for that exact server ID, and writes both reports.
 See the [inventory guide](docs/inventory.md) for artifact semantics and failure
 behavior.
 
+Create a profile bound to a freshly inventoried lab catalog:
+
+    uv run mcp-privprof profile create --profile-id dependency-review-v1 --task-type dependency-review --agent-id agent-1 --server-id lab --scenario read-project --database .mcp-privprof/state.sqlite3 -- python -m lab.server
+
+Run the profile proxy as the MCP server configured in a host:
+
+    uv run mcp-privprof profile run --profile-id dependency-review-v1 --run-id run-001 --scenario-id read-project --database .mcp-privprof/state.sqlite3 -- python -m lab.server
+
+Then seal the evidence, edit the generated deny-by-default review file, complete
+human review, and generate policy:
+
+    uv run mcp-privprof profile seal --profile-id dependency-review-v1 --database .mcp-privprof/state.sqlite3
+    uv run mcp-privprof review complete --review-id review-001 --reviewer operator@example.test --decisions review-decisions.json --database .mcp-privprof/state.sqlite3
+    uv run mcp-privprof policy generate --review-id review-001 --policy-id policy-001 --database .mcp-privprof/state.sqlite3 --output policy.json
+
+This is deterministic evidence collection and human review, not AI model
+training. See the [profiling guide](docs/profiling.md) for the complete data
+flow, technology roles, evidence rules, and recovery command.
+
 ## Planned commands
 
-    mcp-privprof profile
-    mcp-privprof review
     mcp-privprof enforce
     mcp-privprof permit create
 

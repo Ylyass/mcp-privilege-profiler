@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 from math import isfinite
 from typing import cast
 
 import anyio
 import mcp.types as types
-import rfc8785
 from mcp import ClientSession
 
+from mcp_privprof.application.fingerprints import fingerprint_json
 from mcp_privprof.domain.inventory import ToolsetSnapshot, ToolSnapshot
 
 type JsonScalar = bool | int | float | str | None
@@ -48,17 +47,6 @@ class McpToolsetSource:
             self._server_id,
             catalog_timeout_seconds=self._catalog_timeout_seconds,
         )
-
-
-def canonicalize_json(document: JsonValue) -> bytes:
-    """Return RFC 8785 canonical bytes for a JSON-compatible value."""
-    return rfc8785.dumps(document)
-
-
-def fingerprint_json(document: JsonValue) -> tuple[bytes, str]:
-    """Return canonical bytes and a prefixed SHA-256 digest."""
-    canonical = canonicalize_json(document)
-    return canonical, f"sha256:{sha256(canonical).hexdigest()}"
 
 
 def snapshot_tool(tool: types.Tool) -> ToolSnapshot:
