@@ -186,6 +186,15 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
     for decision in decisions["decisions"]:
         if decision["tool_name"] == "read_fixture":
             decision["effect"] = "ALLOW"
+            decision["constraints"] = [
+                {
+                    "kind": "path",
+                    "argument": "relative_path",
+                    "path_roots": ["PROJECT_ROOT"],
+                }
+            ]
+        if decision["tool_name"] == "simulated_command_run":
+            decision["effect"] = "REQUIRE_APPROVAL"
     decisions_file.write_text(json.dumps(decisions), encoding="utf-8")
 
     reviewed = await run_sync_in_worker_thread(
@@ -226,8 +235,75 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
     policy = PolicyV1.model_validate_json(policy_file.read_bytes())
     effects = {rule.tool_name: rule.effect.value for rule in policy.tools}
     assert policy.reviewed_profile_id == "profile-real-1"
+    assert policy.default_effect == "DENY"
     assert effects["read_fixture"] == "ALLOW"
-    assert set(effects.values()) == {"ALLOW", "DENY"}
+    assert effects["simulated_command_run"] == "REQUIRE_APPROVAL"
+    assert set(effects.values()) == {"ALLOW", "REQUIRE_APPROVAL", "DENY"}
+    read_rule = next(rule for rule in policy.tools if rule.tool_name == "read_fixture")
+    assert read_rule.constraints[0].kind == "path"
+
+    enforce_parameters = StdioServerParameters(
+        command=str(CLI_EXE),
+        args=[
+            "enforce",
+            "--policy",
+            str(policy_file),
+            "--path-root",
+            f"PROJECT_ROOT={PROJECT_ROOT / 'lab' / 'fixtures'}",
+            "--cwd",
+            str(PROJECT_ROOT),
+            "--",
+            sys.executable,
+            "-m",
+            "lab.server",
+        ],
+        cwd=PROJECT_ROOT,
+    )
+    with anyio.fail_after(30):
+        async with (
+            stdio_client(enforce_parameters) as streams,
+            ClientSession(*streams) as session,
+        ):
+            await session.initialize()
+            visible = await session.list_tools()
+            assert {tool.name for tool in visible.tools} == {
+                "read_fixture",
+                "simulated_command_run",
+            }
+
+            allowed = await session.call_tool(
+                "read_fixture",
+                {"relative_path": "project/README.md"},
+            )
+            assert allowed.isError is not True
+            assert isinstance(allowed.content[0], TextContent)
+            assert "Fixture project" in allowed.content[0].text
+
+            traversal = await session.call_tool(
+                "read_fixture",
+                {"relative_path": "../outside.txt"},
+            )
+            assert traversal.isError is True
+            assert traversal.structuredContent == {
+                "argument_name": "relative_path",
+                "constraint_kind": "path",
+                "reason_code": "MCP_PRIVPROF_CONSTRAINT_PATH_OUTSIDE_ROOT",
+            }
+
+            approval = await session.call_tool(
+                "simulated_command_run",
+                {"command": "harmless fixture"},
+            )
+            assert approval.isError is True
+            assert approval.structuredContent == {"reason_code": "MCP_PRIVPROF_APPROVAL_REQUIRED"}
+
+            denied = await session.call_tool("simulated_credential_read", {})
+            assert denied.isError is True
+            assert denied.structuredContent == {"reason_code": "MCP_PRIVPROF_POLICY_DENY"}
+
+            unknown = await session.call_tool("not_in_catalog", {})
+            assert unknown.isError is True
+            assert unknown.structuredContent == {"reason_code": "MCP_PRIVPROF_UNKNOWN_TOOL"}
 
 
 @pytest.mark.anyio

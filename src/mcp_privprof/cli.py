@@ -13,6 +13,7 @@ import anyio
 import typer
 
 from mcp_privprof import __version__
+from mcp_privprof.adapters.mcp.enforcement_proxy import run_enforcement_proxy
 from mcp_privprof.adapters.mcp.inventory import McpToolsetSource
 from mcp_privprof.adapters.mcp.profile_proxy import run_profile_proxy
 from mcp_privprof.adapters.mcp.transparent_proxy import (
@@ -21,7 +22,11 @@ from mcp_privprof.adapters.mcp.transparent_proxy import (
 )
 from mcp_privprof.adapters.sqlite import SqliteInventoryRepository, SqliteProfileRepository
 from mcp_privprof.application import InventoryService, ProfileService
-from mcp_privprof.application.policies import policy_contract, render_policy_json
+from mcp_privprof.application.constraints import (
+    constraint_domain,
+    prepare_path_roots,
+)
+from mcp_privprof.application.policies import policy_contract, policy_domain, render_policy_json
 from mcp_privprof.application.profile_reports import (
     build_review_template,
     render_profile_evidence_json,
@@ -34,11 +39,12 @@ from mcp_privprof.application.reports import (
     render_inventory_markdown,
 )
 from mcp_privprof.contracts.inventory import InventoryReportV1
+from mcp_privprof.contracts.policy import PolicyV1
 from mcp_privprof.contracts.profile import ProfileEvidenceReportV1, ReviewDecisionsV1
 from mcp_privprof.domain.policy import Policy
-from mcp_privprof.domain.profile import ProfileSession, ProfileStatus, RunStatus
+from mcp_privprof.domain.profile import ProfileSession, ProfileStatus, ReviewDecision, RunStatus
 
-MAX_REVIEW_FILE_BYTES = 1024 * 1024
+MAX_INPUT_FILE_BYTES = 1024 * 1024
 
 app = typer.Typer(
     name="mcp-privprof",
@@ -62,6 +68,64 @@ def main() -> None:
 def version() -> None:
     """Print the installed version."""
     typer.echo(__version__)
+
+
+@app.command()
+def enforce(
+    downstream: Annotated[
+        list[str],
+        typer.Argument(help="Downstream command and arguments; place after --."),
+    ],
+    policy_file: Annotated[
+        Path,
+        typer.Option("--policy", help="Reviewed policy-v1 JSON file."),
+    ],
+    path_root: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--path-root",
+            help="Trusted symbolic path binding as ALIAS=DIRECTORY; repeat as needed.",
+        ),
+    ] = None,
+    cwd: Annotated[
+        Path | None,
+        typer.Option("--cwd", help="Working directory for the downstream process."),
+    ] = None,
+    startup_timeout: Annotated[
+        float,
+        typer.Option("--startup-timeout", min=0.001, help="Initialization timeout in seconds."),
+    ] = 10.0,
+    call_timeout: Annotated[
+        float,
+        typer.Option("--call-timeout", min=0.001, help="Per-call timeout in seconds."),
+    ] = 30.0,
+) -> None:
+    """Run a reviewed, exact-match, deny-by-default MCP enforcement proxy."""
+    _require_downstream(downstream)
+    try:
+        contract = PolicyV1.model_validate_json(_read_bounded(policy_file))
+        policy = policy_domain(contract)
+        roots = prepare_path_roots(_parse_path_root_bindings(path_root or []))
+        process = _downstream_process(
+            downstream,
+            cwd=cwd,
+            startup_timeout=startup_timeout,
+            call_timeout=call_timeout,
+        )
+        anyio.run(
+            partial(
+                run_enforcement_proxy,
+                process=process,
+                policy=policy,
+                path_roots=roots,
+            )
+        )
+    except typer.BadParameter:
+        raise
+    except BaseException as exc:
+        # This command's stdout is the MCP transport; diagnostics must use stderr.
+        typer.echo(f"Enforcement failed safely ({type(exc).__name__}): {exc}", err=True)
+        raise typer.Exit(code=1) from exc
 
 
 @app.command()
@@ -511,7 +575,14 @@ async def _complete_review(
         reviewer=reviewer,
         reviewed_at=datetime.now(UTC),
         evidence_fingerprint=decisions.evidence_fingerprint,
-        decisions=tuple((decision.tool_name, decision.effect) for decision in decisions.decisions),
+        decisions=tuple(
+            ReviewDecision(
+                tool_name=decision.tool_name,
+                effect=decision.effect,
+                constraints=tuple(constraint_domain(item) for item in decision.constraints),
+            )
+            for decision in decisions.decisions
+        ),
     )
 
 
@@ -561,10 +632,23 @@ def _require_nonblank(*values: tuple[str, str]) -> None:
 
 def _read_bounded(path: Path) -> bytes:
     with path.open("rb") as source:
-        content = source.read(MAX_REVIEW_FILE_BYTES + 1)
-    if len(content) > MAX_REVIEW_FILE_BYTES:
-        raise ValueError(f"review decisions file exceeds {MAX_REVIEW_FILE_BYTES} bytes")
+        content = source.read(MAX_INPUT_FILE_BYTES + 1)
+    if len(content) > MAX_INPUT_FILE_BYTES:
+        raise ValueError(f"input document exceeds {MAX_INPUT_FILE_BYTES} bytes")
     return content
+
+
+def _parse_path_root_bindings(values: list[str]) -> tuple[tuple[str, Path], ...]:
+    bindings: list[tuple[str, Path]] = []
+    for value in values:
+        alias, separator, raw_path = value.partition("=")
+        if not separator or not alias or not raw_path:
+            raise typer.BadParameter(
+                "must use ALIAS=DIRECTORY",
+                param_hint="--path-root",
+            )
+        bindings.append((alias, Path(raw_path)))
+    return tuple(bindings)
 
 
 def _fail(action: str, exc: Exception) -> Never:

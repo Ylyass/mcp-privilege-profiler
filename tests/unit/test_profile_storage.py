@@ -14,9 +14,11 @@ from mcp_privprof.adapters.sqlite import SqliteInventoryRepository, SqliteProfil
 from mcp_privprof.application import ProfileService
 from mcp_privprof.domain import (
     CallOutcome,
+    PathConstraint,
     PolicyEffect,
     ProfileSession,
     ProfileStatus,
+    ReviewDecision,
     RunStatus,
 )
 
@@ -126,8 +128,12 @@ async def test_profile_review_and_policy_gate_round_trip(tmp_path: Path) -> None
         reviewed_at=NOW + timedelta(minutes=4),
         evidence_fingerprint=evidence.evidence_fingerprint,
         decisions=(
-            ("read_fixture", PolicyEffect.ALLOW),
-            ("simulated_command_run", PolicyEffect.DENY),
+            ReviewDecision(
+                "read_fixture",
+                PolicyEffect.ALLOW,
+                (PathConstraint("relative_path", ("PROJECT_ROOT",)),),
+            ),
+            ReviewDecision("simulated_command_run", PolicyEffect.DENY),
         ),
     )
     policy = await service.policy_from_review(review.review_id, "policy-1")
@@ -138,6 +144,7 @@ async def test_profile_review_and_policy_gate_round_trip(tmp_path: Path) -> None
         ("read_fixture", PolicyEffect.ALLOW),
         ("simulated_command_run", PolicyEffect.DENY),
     ]
+    assert policy.rules[0].constraints == (PathConstraint("relative_path", ("PROJECT_ROOT",)),)
 
 
 @pytest.mark.anyio
@@ -150,7 +157,7 @@ async def test_policy_generation_rejects_missing_completed_review(tmp_path: Path
 
 
 @pytest.mark.anyio
-async def test_schema_one_database_migrates_to_profile_schema_two(tmp_path: Path) -> None:
+async def test_schema_one_database_migrates_to_current_schema(tmp_path: Path) -> None:
     """Existing inventory history survives the profile-table migration."""
     database_path = tmp_path / "state.sqlite3"
     inventory_repository = SqliteInventoryRepository(database_path)
@@ -166,7 +173,7 @@ async def test_schema_one_database_migrates_to_profile_schema_two(tmp_path: Path
             "profile_sessions",
         ):
             database.execute(f"DROP TABLE {table}")
-        database.execute("DELETE FROM schema_migrations WHERE version = 2")
+        database.execute("DELETE FROM schema_migrations WHERE version >= 2")
 
     profile_repository = SqliteProfileRepository(database_path)
     await profile_repository.initialize()
@@ -177,5 +184,53 @@ async def test_schema_one_database_migrates_to_profile_schema_two(tmp_path: Path
         profile_table = database.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'profile_sessions'"
         ).fetchone()
-    assert version == 2
+        decision_columns = [
+            row[1] for row in database.execute("PRAGMA table_info(profile_review_decisions)")
+        ]
+    assert version == 3
     assert profile_table == ("profile_sessions",)
+    assert decision_columns[-1] == "constraints_json"
+
+
+@pytest.mark.anyio
+async def test_schema_two_review_rows_gain_empty_constraints_on_migration(
+    tmp_path: Path,
+) -> None:
+    """A completed pre-constraint review remains readable and deny-preserving."""
+    database_path = tmp_path / "state.sqlite3"
+    service, profile = await _create_profile(database_path)
+    run = await service.start_run(
+        profile.profile_id,
+        run_id="schema-2-run",
+        scenario_id="scenario-a",
+        started_at=NOW + timedelta(minutes=1),
+    )
+    await service.finish_run(
+        run.run_id,
+        status=RunStatus.COMPLETED,
+        completed_at=NOW + timedelta(minutes=2),
+    )
+    await service.seal(profile.profile_id, sealed_at=NOW + timedelta(minutes=3))
+    evidence = await service.evidence_report(
+        profile.profile_id,
+        generated_at=NOW + timedelta(minutes=4),
+    )
+    original = await service.complete_review(
+        profile.profile_id,
+        review_id="review-schema-2",
+        reviewer="operator@example",
+        reviewed_at=NOW + timedelta(minutes=5),
+        evidence_fingerprint=evidence.evidence_fingerprint,
+        decisions=(
+            ReviewDecision("read_fixture", PolicyEffect.ALLOW),
+            ReviewDecision("simulated_command_run", PolicyEffect.DENY),
+        ),
+    )
+    with sqlite3.connect(database_path) as database:
+        database.execute("ALTER TABLE profile_review_decisions DROP COLUMN constraints_json")
+        database.execute("DELETE FROM schema_migrations WHERE version = 3")
+
+    migrated_repository = SqliteProfileRepository(database_path)
+    await migrated_repository.initialize()
+
+    assert await migrated_repository.get_review(original.review_id) == original

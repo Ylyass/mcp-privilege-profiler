@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from re import fullmatch
 
+from mcp_privprof.domain.constraints import PolicyConstraint, normalize_constraints
 from mcp_privprof.domain.policy import Policy, PolicyEffect, PolicyRule, ToolIdentity
 
 
@@ -224,10 +225,15 @@ class ReviewDecision:
 
     tool_name: str
     effect: PolicyEffect
+    constraints: tuple[PolicyConstraint, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.tool_name:
             raise ValueError("review tool_name must not be empty")
+        normalized = normalize_constraints(self.constraints)
+        if self.effect is PolicyEffect.DENY and normalized:
+            raise ValueError("DENY review decisions cannot contain constraints")
+        object.__setattr__(self, "constraints", normalized)
 
 
 @dataclass(frozen=True, slots=True)
@@ -316,6 +322,7 @@ def generate_reviewed_policy(
                     tool_name=decision.tool_name,
                 ),
                 effect=decision.effect,
+                constraints=decision.constraints,
             )
             for decision in review.decisions
         ),

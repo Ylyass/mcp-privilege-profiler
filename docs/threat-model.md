@@ -38,6 +38,8 @@ Untrusted:
 8. Profile evidence is bound to trusted launch labels and one exact catalog.
 9. Profile persistence excludes raw arguments and result bodies.
 10. Policy generation requires an exact completed review of sealed evidence.
+11. Every enforced constraint is part of that completed review.
+12. Constraint denials expose argument identity but not the rejected value.
 
 ## Stage 6 failure behavior
 
@@ -51,6 +53,30 @@ Untrusted:
 - A hard-killed host can leave an open run because no process can guarantee a
   final database write after termination; the trusted operator must mark that
   run aborted before sealing.
+
+## Stage 7 failure behavior
+
+- Policy parse or domain validation failure prevents enforce mode from
+  starting.
+- Every live tool must have exactly one reviewed policy rule; partial and
+  extra-rule policies prevent startup.
+- A stale complete-tool fingerprint prevents startup. A live list-change signal
+  invalidates the gate before background revalidation begins.
+- DENY entries are removed from `tools/list`, but call-time checks remain the
+  authorization boundary and reject direct denied or unknown requests.
+- Missing constraint arguments, type mismatches, traversal, URL normalization
+  bypasses, enum misses, and UTF-8 byte overages return stable errors without
+  forwarding.
+- A constraint name absent from the reviewed tool schema prevents startup, and
+  an otherwise allowed call must still satisfy that exact input schema.
+- `REQUIRE_APPROVAL` fails closed until Stage 8 implements a separate
+  single-use permit channel.
+- Downstream timeout and session failure are bounded and returned as stable
+  infrastructure errors. Cancellation continues to propagate rather than being
+  fabricated as a decision.
+
+Mandatory audit-before-forward is not present in Stage 7. Therefore the Stage
+8 invariant that an audit-write failure blocks forwarding is not yet claimed.
 
 ## Non-goals
 

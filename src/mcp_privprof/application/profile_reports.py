@@ -165,7 +165,11 @@ def build_review_template(report: ProfileEvidenceReportV1) -> ReviewDecisionsV1:
         profile_id=report.profile_id,
         evidence_fingerprint=report.evidence_fingerprint,
         decisions=tuple(
-            ReviewDecisionV1(tool_name=tool.tool_name, effect=PolicyEffect.DENY)
+            ReviewDecisionV1(
+                tool_name=tool.tool_name,
+                effect=PolicyEffect.DENY,
+                constraints=(),
+            )
             for tool in report.tools
             if tool.available
         ),

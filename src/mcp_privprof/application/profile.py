@@ -7,7 +7,7 @@ from datetime import datetime
 from mcp_privprof.application.profile_reports import build_profile_evidence_report
 from mcp_privprof.contracts.profile import ProfileEvidenceReportV1
 from mcp_privprof.domain.inventory import StoredToolsetSnapshot
-from mcp_privprof.domain.policy import Policy, PolicyEffect
+from mcp_privprof.domain.policy import Policy
 from mcp_privprof.domain.profile import (
     AvailableTool,
     CallFact,
@@ -122,7 +122,7 @@ class ProfileService:
         reviewer: str,
         reviewed_at: datetime,
         evidence_fingerprint: str,
-        decisions: tuple[tuple[str, PolicyEffect], ...],
+        decisions: tuple[ReviewDecision, ...],
     ) -> CompletedReview:
         profile = await self.profile(profile_id)
         tools = await self._repository.available_tools(profile_id)
@@ -136,10 +136,7 @@ class ProfileService:
             reviewer=reviewer,
             reviewed_at=reviewed_at,
             evidence_fingerprint=evidence_fingerprint,
-            decisions=tuple(
-                ReviewDecision(tool_name=tool_name, effect=effect)
-                for tool_name, effect in decisions
-            ),
+            decisions=decisions,
         )
         await self._repository.save_review(review)
         return review

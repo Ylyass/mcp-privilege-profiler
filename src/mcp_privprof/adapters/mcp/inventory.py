@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from math import isfinite
 from typing import cast
 
@@ -16,6 +17,14 @@ type JsonScalar = bool | int | float | str | None
 type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 
 MAX_CATALOG_PAGES = 100
+
+
+@dataclass(frozen=True, slots=True)
+class CollectedCatalog:
+    """One complete raw catalog plus its exact security fingerprint."""
+
+    snapshot: ToolsetSnapshot
+    tools: tuple[types.Tool, ...]
 
 
 class McpToolsetSource:
@@ -93,17 +102,32 @@ async def collect_toolset(
     catalog_timeout_seconds: float = 30.0,
 ) -> ToolsetSnapshot:
     """Collect all tools/list pages within one finite total timeout."""
+    catalog = await collect_catalog(
+        session,
+        server_id,
+        catalog_timeout_seconds=catalog_timeout_seconds,
+    )
+    return catalog.snapshot
+
+
+async def collect_catalog(
+    session: ClientSession,
+    server_id: str,
+    *,
+    catalog_timeout_seconds: float = 30.0,
+) -> CollectedCatalog:
+    """Collect raw tool definitions and their exact snapshot atomically."""
     if not server_id:
         raise ValueError("server_id must not be empty")
     _validate_catalog_timeout(catalog_timeout_seconds)
     with anyio.fail_after(catalog_timeout_seconds):
-        return await _collect_toolset_pages(session, server_id)
+        return await _collect_catalog_pages(session, server_id)
 
 
-async def _collect_toolset_pages(
+async def _collect_catalog_pages(
     session: ClientSession,
     server_id: str,
-) -> ToolsetSnapshot:
+) -> CollectedCatalog:
     tools: list[types.Tool] = []
     cursor: str | None = None
     seen_cursors: set[str] = set()
@@ -115,7 +139,12 @@ async def _collect_toolset_pages(
 
         cursor = result.nextCursor
         if cursor is None:
-            return snapshot_toolset(server_id=server_id, tools=tools)
+            snapshot = snapshot_toolset(server_id=server_id, tools=tools)
+            tools_by_name = {tool.name: tool for tool in tools}
+            return CollectedCatalog(
+                snapshot=snapshot,
+                tools=tuple(tools_by_name[name] for name in sorted(tools_by_name)),
+            )
         if cursor in seen_cursors:
             raise ValueError("downstream tools/list pagination cursor cycle detected")
         seen_cursors.add(cursor)

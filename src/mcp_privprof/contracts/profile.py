@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
+from mcp_privprof.contracts.constraints import ConstraintV1, validate_constraint_collection
 from mcp_privprof.domain.policy import PolicyEffect
 from mcp_privprof.domain.profile import CandidateRecommendation, EvidenceTier
 
@@ -154,6 +155,14 @@ class ReviewDecisionV1(BaseModel):
 
     tool_name: str = Field(min_length=1)
     effect: PolicyEffect
+    constraints: tuple[ConstraintV1, ...]
+
+    @model_validator(mode="after")
+    def constraints_are_unambiguous(self) -> ReviewDecisionV1:
+        validate_constraint_collection(self.constraints)
+        if self.effect is PolicyEffect.DENY and self.constraints:
+            raise ValueError("DENY review decisions cannot contain constraints")
+        return self
 
 
 class ReviewDecisionsV1(BaseModel):

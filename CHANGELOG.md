@@ -34,3 +34,13 @@ All notable changes are documented here.
   policy generation has no path around a completed review.
 - Added real MCP integration proof for successful observation, cancellation,
   fail-closed live catalog drift, argument non-persistence, and review gating.
+- Added reviewed path-root, exact URL host, strict enum, and UTF-8 byte-length
+  policy constraints with public JSON Schemas and SQLite schema migration 3.
+- Added the public `mcp-privprof enforce` command with exact startup
+  fingerprint validation and complete policy-rule coverage.
+- Added catalog minimization for DENY tools and pre-forward rejection of
+  denied, unknown, constraint-violating, and not-yet-approved calls using
+  stable structured reason codes.
+- Added immediate enforcement invalidation on `tools/list_changed`, exact
+  background revalidation, adversarial constraint properties, and real MCP
+  proof that blocked calls never mutate downstream state.

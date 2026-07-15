@@ -107,18 +107,52 @@ The review input must cover every available tool exactly once and match the
 sealed evidence fingerprint. Policy generation reloads and fingerprints the
 evidence again, so a stale or substituted review cannot generate policy.
 
+## Enforcement path
+
+    reviewed policy-v1 + trusted path-root bindings
+      -> strict policy and constraint validation
+      -> initialized downstream session
+      -> complete catalog collection and exact fingerprint gate
+      -> filtered tools/list
+      -> exact decision and in-memory constraint checks
+      -> downstream tools/call only for a passing ALLOW rule
+
+The policy carries one rule for every tool in the reviewed catalog and declares
+`default_effect: DENY`. Startup requires exact rule coverage and the exact
+complete-tool fingerprint. This is stricter than accepting only the names that
+appear in an allowlist: it detects both missing review decisions and rules for
+tools absent from the live server.
+
+Path constraints refer to symbolic aliases. Trusted launch configuration binds
+each alias to an existing directory and resolves it once. URL constraints use
+exact normalized scheme and host comparisons. Enum comparison is type-exact,
+and byte limits use strict UTF-8 encoding. Constraint errors identify only the
+kind and argument name, never the rejected value.
+
+The enforcement catalog is a single complete filtered page containing ALLOW
+and REQUIRE_APPROVAL definitions. DENY definitions are absent. Direct calls to
+DENY or unknown names are still rejected before forwarding. In Stage 7,
+REQUIRE_APPROVAL is discoverable but always returns a stable error because the
+single-use permit workflow belongs to Stage 8.
+
+A downstream tools-list change invalidates the gate synchronously in the MCP
+message handler. A separate worker recollects the complete catalog; only the
+exact approved digest can restore validity. This avoids I/O deadlock in the
+receive loop while leaving no interval where changed definitions are trusted.
+
 ## Layer responsibilities
 
 | Layer | Responsibility |
 |---|---|
-| Domain | Profile/run state machines, exact review coverage, default-deny policy facts |
-| Application | Evidence aggregation, deterministic fingerprints, lifecycle orchestration |
+| Domain | Profile/run state machines, exact review coverage, default-deny policy and constraint facts |
+| Application | Evidence aggregation, fingerprints, lifecycle orchestration, constraint evaluation |
 | Ports | Storage interfaces independent of SQLite |
 | MCP adapters | Strict downstream session, proxy forwarding, catalog invalidation |
 | SQLite adapters | Atomic migrations and privacy-safe durable state |
 | Contracts | Strict versioned JSON evidence, review, policy, and event models |
 | CLI | Trusted composition, bounded file input, atomic artifact writes |
 
-Policy enforcement, catalog filtering by policy, argument constraints, limits,
-and mandatory audit events are not active yet. Stage 7 will consume the reviewed
-policy and make authorization decisions before forwarding.
+Policy enforcement, catalog minimization, and reviewed path/URL/enum/byte
+constraints are active. Limits, mandatory pre-forward audit, approval permits,
+and Wazuh event delivery are not active yet; they are the Stage 8 and Stage 9
+boundaries.

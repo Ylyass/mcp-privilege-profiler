@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from re import fullmatch
 
+from mcp_privprof.domain.constraints import PolicyConstraint, normalize_constraints
+
 
 class PolicyEffect(StrEnum):
     """The only v0.1 policy effects."""
@@ -26,6 +28,10 @@ class ToolIdentity:
     server_id: str
     tool_name: str
 
+    def __post_init__(self) -> None:
+        if not self.server_id or not self.tool_name:
+            raise ValueError("tool identity values must not be empty")
+
 
 @dataclass(frozen=True, slots=True)
 class PolicyRule:
@@ -33,6 +39,13 @@ class PolicyRule:
 
     identity: ToolIdentity
     effect: PolicyEffect
+    constraints: tuple[PolicyConstraint, ...] = ()
+
+    def __post_init__(self) -> None:
+        normalized = normalize_constraints(self.constraints)
+        if self.effect is PolicyEffect.DENY and normalized:
+            raise ValueError("DENY rules cannot contain constraints")
+        object.__setattr__(self, "constraints", normalized)
 
 
 @dataclass(frozen=True, slots=True)

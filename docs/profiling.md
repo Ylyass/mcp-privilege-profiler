@@ -100,8 +100,9 @@ matches the sealed profile.
     uv run mcp-privprof policy generate --review-id review-001 --policy-id policy-001 --database .mcp-privprof/state.sqlite3 --output policy.json
 
 Policy generation has no path around the completed-review record. The policy
-contains the reviewed profile ID and exact toolset fingerprint. Stage 6 creates
-this artifact; Stage 7 will enforce it and filter `tools/list`.
+contains the reviewed profile ID, exact toolset fingerprint, effects, and any
+reviewed constraints. Stage 7 enforces it and filters `tools/list`; see the
+[enforcement guide](enforcement.md).
 
 ## How evidence is interpreted
 
@@ -126,10 +127,11 @@ leftover run explicitly before sealing:
     uv run mcp-privprof profile abort-run --run-id run-001 --database .mcp-privprof/state.sqlite3
 
 The local operator and storage directory remain trusted. SQLite schema version
-2 stores no argument or result columns in `profile_calls`. The default evidence
+3 stores reviewed constraints while retaining no argument or result columns in
+`profile_calls`. The default evidence
 is data minimization, not encryption; operators must still protect the database
 and report files.
 
-This stage recommends candidates and generates a reviewed policy artifact. It
-does not yet enforce policy, constrain arguments, write mandatory audit JSONL,
-or send Wazuh events. Those connections remain in later roadmap stages.
+This stage recommends candidates and generates a reviewed policy artifact.
+Stage 7 now enforces effects and exact argument constraints. Mandatory audit
+JSONL, limits, approval permits, and Wazuh events remain later roadmap stages.

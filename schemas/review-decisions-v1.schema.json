@@ -15,14 +15,99 @@
     "decisions": {
       "type": "array",
       "uniqueItems": true,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["tool_name", "effect"],
-        "properties": {
-          "tool_name": { "type": "string", "minLength": 1 },
-          "effect": { "enum": ["ALLOW", "REQUIRE_APPROVAL", "DENY"] }
+      "items": { "$ref": "#/$defs/reviewDecision" }
+    }
+  },
+  "$defs": {
+    "reviewDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool_name", "effect", "constraints"],
+      "properties": {
+        "tool_name": { "type": "string", "minLength": 1 },
+        "effect": { "enum": ["ALLOW", "REQUIRE_APPROVAL", "DENY"] },
+        "constraints": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/constraint" }
         }
+      }
+    },
+    "constraint": {
+      "oneOf": [
+        { "$ref": "#/$defs/pathConstraint" },
+        { "$ref": "#/$defs/urlConstraint" },
+        { "$ref": "#/$defs/enumConstraint" },
+        { "$ref": "#/$defs/maxUtf8BytesConstraint" }
+      ]
+    },
+    "pathConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "argument", "path_roots"],
+      "properties": {
+        "kind": { "const": "path" },
+        "argument": { "type": "string", "minLength": 1 },
+        "path_roots": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+          }
+        }
+      }
+    },
+    "urlConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "argument", "schemes", "hosts"],
+      "properties": {
+        "kind": { "const": "url" },
+        "argument": { "type": "string", "minLength": 1 },
+        "schemes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "hosts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "enumConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "argument", "values"],
+      "properties": {
+        "kind": { "const": "enum" },
+        "argument": { "type": "string", "minLength": 1 },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "oneOf": [
+              { "type": "integer" },
+              { "type": "string" }
+            ]
+          }
+        }
+      }
+    },
+    "maxUtf8BytesConstraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "argument", "maximum"],
+      "properties": {
+        "kind": { "const": "max_utf8_bytes" },
+        "argument": { "type": "string", "minLength": 1 },
+        "maximum": { "type": "integer", "minimum": 0 }
       }
     }
   }

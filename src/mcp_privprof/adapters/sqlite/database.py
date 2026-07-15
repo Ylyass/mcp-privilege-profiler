@@ -8,7 +8,7 @@ from pathlib import Path
 import aiosqlite
 import anyio
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 _CREATE_MIGRATIONS = """
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -160,9 +160,17 @@ _MIGRATION_2 = (
     """,
 )
 
+_MIGRATION_3 = (
+    """
+    ALTER TABLE profile_review_decisions
+    ADD COLUMN constraints_json BLOB NOT NULL DEFAULT X'5B5D'
+    """,
+)
+
 _MIGRATIONS: dict[int, tuple[str, ...]] = {
     1: _MIGRATION_1,
     2: _MIGRATION_2,
+    3: _MIGRATION_3,
 }
 
 

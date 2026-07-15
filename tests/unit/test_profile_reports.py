@@ -171,8 +171,12 @@ def test_review_decisions_reject_duplicate_tool_names() -> None:
             profile_id="profile-1",
             evidence_fingerprint=f"sha256:{'f' * 64}",
             decisions=(
-                ReviewDecisionV1(tool_name="read_fixture", effect=PolicyEffect.ALLOW),
-                ReviewDecisionV1(tool_name="read_fixture", effect=PolicyEffect.DENY),
+                ReviewDecisionV1(
+                    tool_name="read_fixture", effect=PolicyEffect.ALLOW, constraints=()
+                ),
+                ReviewDecisionV1(
+                    tool_name="read_fixture", effect=PolicyEffect.DENY, constraints=()
+                ),
             ),
         )
 

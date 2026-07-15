@@ -22,14 +22,15 @@ def test_policy_contract_rejects_duplicate_rules() -> None:
     with pytest.raises(ValidationError, match="duplicate"):
         PolicyV1(
             policy_version=1,
+            default_effect="DENY",
             policy_id="policy-1",
             task_type="dependency-review",
             server_id="lab",
             approved_toolset_fingerprint=FINGERPRINT,
             reviewed_profile_id="profile-1",
             tools=(
-                PolicyRuleV1(tool_name="read_fixture", effect=PolicyEffect.ALLOW),
-                PolicyRuleV1(tool_name="read_fixture", effect=PolicyEffect.DENY),
+                PolicyRuleV1(tool_name="read_fixture", effect=PolicyEffect.ALLOW, constraints=()),
+                PolicyRuleV1(tool_name="read_fixture", effect=PolicyEffect.DENY, constraints=()),
             ),
         )
 

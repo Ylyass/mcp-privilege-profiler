@@ -1,5 +1,15 @@
 """Dependency-free security domain."""
 
+from mcp_privprof.domain.constraints import (
+    EnumConstraint,
+    MaxUtf8BytesConstraint,
+    PathConstraint,
+    PolicyConstraint,
+    UrlConstraint,
+    constraint_kind,
+    normalize_host,
+    normalize_scheme,
+)
 from mcp_privprof.domain.inventory import (
     DriftChange,
     DriftKind,
@@ -35,6 +45,11 @@ from mcp_privprof.domain.profile import (
 )
 
 __all__ = [
+    "EnumConstraint",
+    "MaxUtf8BytesConstraint",
+    "PathConstraint",
+    "PolicyConstraint",
+    "UrlConstraint",
     "DriftChange",
     "DriftKind",
     "DriftReport",
@@ -61,5 +76,8 @@ __all__ = [
     "ToolIdentity",
     "compare_toolsets",
     "complete_review",
+    "constraint_kind",
     "generate_reviewed_policy",
+    "normalize_host",
+    "normalize_scheme",
 ]

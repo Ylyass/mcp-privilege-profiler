@@ -34,8 +34,9 @@ be positive and finite.
 ## Stored evidence
 
 Inventory tables were introduced by SQLite migration 1. The current combined
-database is schema version 2 because migration 2 adds profiling and review
-tables without changing or deleting inventory history. Inventory storage
+database is schema version 3: migration 2 adds profiling and review tables, and
+migration 3 adds reviewed policy constraints without changing or deleting
+inventory history. Inventory storage
 contains:
 
 - one append-only row per complete catalog observation;
@@ -71,8 +72,9 @@ remain in JSON rather than being rendered as active Markdown or HTML.
 | Title, description, or icons only | Informational | Presentation changed without an input-contract change |
 | Other known field changed | Review required | The effect is not safe to infer automatically |
 
-Stage 5 reports these facts. Stage 7 will consume the same classification and
-block enforcement on unapproved security widening.
+Stage 5 reports these facts. Stage 7 enforcement uses the stricter exact digest
+gate: every changed complete Tool value blocks the reviewed policy until a new
+profile and review approve it, regardless of the report classification.
 
 ## Live catalog changes
 
@@ -85,5 +87,7 @@ the protocol notification is not a delta: every refresh asks for the entire
 current catalog. A refresh failure propagates to the owning task group and is
 not silently ignored.
 
-The public inventory command is a one-shot scan. Profile mode now uses live
-monitoring to invalidate changed catalogs; enforce mode will reuse it in Stage 7.
+The public inventory command is a one-shot scan. Profile and enforce modes both
+use live monitoring to invalidate changed catalogs immediately. Enforce mode
+can reopen the gate only when a complete refresh exactly matches the reviewed
+fingerprint.

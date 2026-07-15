@@ -15,7 +15,14 @@ from mcp_privprof.adapters.mcp.inventory import snapshot_toolset
 from mcp_privprof.adapters.sqlite import SqliteInventoryRepository, SqliteProfileRepository
 from mcp_privprof.application import ProfileService
 from mcp_privprof.application.policies import policy_contract, render_policy_json
-from mcp_privprof.domain import PolicyEffect, ProfileSession, ProfileStatus, RunStatus
+from mcp_privprof.domain import (
+    PathConstraint,
+    PolicyEffect,
+    ProfileSession,
+    ProfileStatus,
+    ReviewDecision,
+    RunStatus,
+)
 
 NOW = datetime(2026, 7, 15, tzinfo=UTC)
 POLICY_SCHEMA = Path(__file__).parents[2] / "schemas" / "policy-v1.schema.json"
@@ -85,7 +92,7 @@ async def test_review_rejects_stale_or_substituted_evidence_digest(tmp_path: Pat
             reviewer="operator@example",
             reviewed_at=NOW + timedelta(minutes=4),
             evidence_fingerprint=f"sha256:{'f' * 64}",
-            decisions=(("read_fixture", PolicyEffect.ALLOW),),
+            decisions=(ReviewDecision("read_fixture", PolicyEffect.ALLOW),),
         )
 
 
@@ -103,7 +110,13 @@ async def test_completed_review_renders_schema_valid_policy(tmp_path: Path) -> N
         reviewer="operator@example",
         reviewed_at=NOW + timedelta(minutes=5),
         evidence_fingerprint=evidence.evidence_fingerprint,
-        decisions=(("read_fixture", PolicyEffect.ALLOW),),
+        decisions=(
+            ReviewDecision(
+                "read_fixture",
+                PolicyEffect.ALLOW,
+                (PathConstraint("relative_path", ("PROJECT_ROOT",)),),
+            ),
+        ),
     )
     domain_policy = await service.policy_from_review(review.review_id, "policy-1")
     document = json.loads(render_policy_json(policy_contract(domain_policy)))
@@ -112,4 +125,17 @@ async def test_completed_review_renders_schema_valid_policy(tmp_path: Path) -> N
     validator.validate(document)
 
     assert document["reviewed_profile_id"] == "profile-1"
-    assert document["tools"] == [{"effect": "ALLOW", "tool_name": "read_fixture"}]
+    assert document["default_effect"] == "DENY"
+    assert document["tools"] == [
+        {
+            "constraints": [
+                {
+                    "argument": "relative_path",
+                    "kind": "path",
+                    "path_roots": ["PROJECT_ROOT"],
+                }
+            ],
+            "effect": "ALLOW",
+            "tool_name": "read_fixture",
+        }
+    ]

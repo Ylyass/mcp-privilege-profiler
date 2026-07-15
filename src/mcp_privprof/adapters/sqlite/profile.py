@@ -9,6 +9,7 @@ from typing import cast
 import aiosqlite
 import anyio
 
+from mcp_privprof.adapters.sqlite.constraints import decode_constraints, encode_constraints
 from mcp_privprof.adapters.sqlite.database import configure_database, initialize_database
 from mcp_privprof.domain.policy import PolicyEffect
 from mcp_privprof.domain.profile import (
@@ -349,11 +350,18 @@ class SqliteProfileRepository:
                 )
                 await database.executemany(
                     """
-                    INSERT INTO profile_review_decisions(review_id, ordinal, tool_name, effect)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO profile_review_decisions(
+                        review_id, ordinal, tool_name, effect, constraints_json
+                    ) VALUES (?, ?, ?, ?, ?)
                     """,
                     [
-                        (review.review_id, ordinal, decision.tool_name, decision.effect.value)
+                        (
+                            review.review_id,
+                            ordinal,
+                            decision.tool_name,
+                            decision.effect.value,
+                            encode_constraints(decision.constraints),
+                        )
                         for ordinal, decision in enumerate(review.decisions)
                     ],
                 )
@@ -382,7 +390,7 @@ class SqliteProfileRepository:
             row = cast(tuple[object, ...], raw_row)
             cursor = await database.execute(
                 """
-                SELECT tool_name, effect
+                SELECT tool_name, effect, constraints_json
                 FROM profile_review_decisions
                 WHERE review_id = ?
                 ORDER BY ordinal
@@ -402,6 +410,7 @@ class SqliteProfileRepository:
                     ReviewDecision(
                         tool_name=str(decision_row[0]),
                         effect=PolicyEffect(str(decision_row[1])),
+                        constraints=decode_constraints(decision_row[2]),
                     )
                     for decision_row in decision_rows
                 ),
