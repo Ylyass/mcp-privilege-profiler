@@ -5,5 +5,7 @@ actual supported security boundary, not future intentions.
 
 - [Architecture decision records](adrs/README.md)
 - [Architecture](architecture.md)
+- [Inventory and drift](inventory.md)
+- [Implementation roadmap](roadmap.md)
 - [Threat model](threat-model.md)
 - [Technology baseline](technology-baseline.md)

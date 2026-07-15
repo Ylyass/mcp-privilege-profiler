@@ -57,7 +57,14 @@ def test_event_contract_forbids_raw_argument_field() -> None:
         )
 
 
-@pytest.mark.parametrize("schema_name", ["policy-v1.schema.json", "event-v1.schema.json"])
+@pytest.mark.parametrize(
+    "schema_name",
+    [
+        "policy-v1.schema.json",
+        "event-v1.schema.json",
+        "inventory-report-v1.schema.json",
+    ],
+)
 def test_public_schema_is_valid_json_schema(schema_name: str) -> None:
     """Public schemas must remain valid Draft 2020-12 JSON Schema documents."""
     document = json.loads((SCHEMAS_DIR / schema_name).read_text(encoding="utf-8"))

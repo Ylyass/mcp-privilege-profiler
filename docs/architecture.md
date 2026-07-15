@@ -46,6 +46,31 @@ Drift comparison is conservative: additions are security widening, removals are
 breaking, any inputSchema change is security widening, presentation-only fields
 are informational, and other changed fields require review.
 
-Policy, catalog filtering, profiling, drift detection, limits, and audit events
-are not active yet. They will be inserted between the upstream handlers and the
-downstream session only after transparent transport is proven.
+## Current inventory workflow
+
+    inventory CLI
+      -> strict initialized downstream session
+      -> complete paginated MCP catalog source
+      -> serialized inventory application service
+      -> append-only SQLite repository
+      -> inventory-report-v1 JSON and escaped Markdown
+
+Each refresh loads the latest observation for the exact trusted server ID,
+appends the new complete snapshot in one transaction, and compares the two.
+Repeated equal catalogs are retained as separate observations because they are
+separate historical facts.
+
+For long-running sessions, the MCP message handler only places
+`notifications/tools/list_changed` into a one-element coalescing queue. A
+separate worker performs the refresh. Calling tools/list directly inside the
+message handler could deadlock the SDK receive loop that must deliver the
+response.
+
+The one-shot inventory CLI exits after its report and therefore does not wait
+for later notifications. The monitor is verified separately through a real
+long-running MCP integration test and will be composed into later proxy modes.
+
+Policy enforcement, catalog filtering, profiling, enforcement response to
+drift, limits, and audit events are not active yet. Inventory drift is currently
+evidence for the operator; Stage 7 will make security-widening drift fail closed
+in enforce mode.

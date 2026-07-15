@@ -23,21 +23,45 @@ Enforce mode is deny-by-default:
 
 ## Development status
 
-The initial repository foundation is in progress. See the project plan for the
-build sequence, protocol baseline, threat model, Wazuh design, test strategy,
-and release gates.
+The current verified build includes:
+
+- professional repository, security-contract, and deterministic lab foundations;
+- a one-to-one transparent MCP stdio proxy;
+- complete paginated tool inventory with RFC 8785 and SHA-256 fingerprints;
+- append-only SQLite inventory history and conservative drift classification;
+- versioned JSON and human-readable Markdown inventory reports;
+- non-blocking handling of `notifications/tools/list_changed` for long-running sessions.
+
+Profiling, human review, enforcement, limits, audit delivery, Wazuh content, CI,
+and release publication are not implemented yet. See the [roadmap](docs/roadmap.md)
+for the order and current boundary.
+
+## Current commands
+
+Check the installed development version:
+
+    uv run mcp-privprof version
+
+Inventory the deterministic paginated lab server from the repository root:
+
+    uv run mcp-privprof inventory --server-id pagination-lab --database .mcp-privprof/inventory.sqlite3 --json-report inventory-report.json --markdown-report inventory-report.md -- python -m lab.paginated_server
+
+The inventory command calls `tools/list` only. It does not execute any exposed
+tool. It follows all catalog pages, stores a new observation, compares it with
+the previous observation for that exact server ID, and writes both reports.
+
+See the [inventory guide](docs/inventory.md) for artifact semantics and failure
+behavior.
 
 ## Planned commands
 
-    mcp-privprof inventory
     mcp-privprof profile
     mcp-privprof review
     mcp-privprof enforce
     mcp-privprof permit create
 
-These commands are not implemented yet.
+These planned commands are not implemented yet.
 
 ## License
 
 Apache-2.0. See LICENSE.
-

@@ -18,3 +18,9 @@ All notable changes are documented here.
   with a stable, non-sensitive error.
 - Added complete paginated tool inventory, RFC 8785/SHA-256 fingerprints, and
   conservative drift classification.
+- Added append-only SQLite inventory history with explicit migration and
+  integrity checks.
+- Added versioned JSON and escaped Markdown inventory reports plus the public
+  `mcp-privprof inventory` command.
+- Added non-blocking `notifications/tools/list_changed` refresh handling and a
+  real MCP catalog-change integration fixture.

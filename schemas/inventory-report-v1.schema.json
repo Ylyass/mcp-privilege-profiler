@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcp-privilege-profiler.dev/schemas/inventory-report-v1.schema.json",
+  "title": "MCP Privilege Profiler inventory report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_schema_version",
+    "generated_at",
+    "snapshot_id",
+    "captured_at",
+    "server_id",
+    "toolset_fingerprint",
+    "tool_count",
+    "tools",
+    "drift"
+  ],
+  "properties": {
+    "report_schema_version": { "const": "1.0" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "snapshot_id": { "type": "integer", "minimum": 1 },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "server_id": { "type": "string", "minLength": 1 },
+    "toolset_fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "tool_count": { "type": "integer", "minimum": 0 },
+    "tools": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tool" }
+    },
+    "drift": {
+      "oneOf": [
+        { "$ref": "#/$defs/drift" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "$defs": {
+    "fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "severity": {
+      "enum": ["informational", "review_required", "security_widening", "breaking"]
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "fingerprint", "definition"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "fingerprint": { "$ref": "#/$defs/fingerprint" },
+        "definition": { "type": "object" }
+      }
+    },
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool_name", "kind", "severity", "changed_fields"],
+      "properties": {
+        "tool_name": { "type": "string", "minLength": 1 },
+        "kind": { "enum": ["added", "removed", "modified"] },
+        "severity": { "$ref": "#/$defs/severity" },
+        "changed_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "drift": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "previous_snapshot_id",
+        "previous_fingerprint",
+        "current_fingerprint",
+        "changed",
+        "maximum_severity",
+        "changes"
+      ],
+      "properties": {
+        "previous_snapshot_id": { "type": "integer", "minimum": 1 },
+        "previous_fingerprint": { "$ref": "#/$defs/fingerprint" },
+        "current_fingerprint": { "$ref": "#/$defs/fingerprint" },
+        "changed": { "type": "boolean" },
+        "maximum_severity": {
+          "oneOf": [
+            { "$ref": "#/$defs/severity" },
+            { "type": "null" }
+          ]
+        },
+        "changes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/change" }
+        }
+      }
+    }
+  }
+}

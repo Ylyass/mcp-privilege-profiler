@@ -76,6 +76,32 @@ class ProxyContext:
     downstream: ClientSession
 
 
+@asynccontextmanager
+async def open_downstream_session(
+    process: DownstreamProcess,
+) -> AsyncGenerator[ClientSession]:
+    """Open and initialize one strict downstream stdio MCP session."""
+    parameters = StdioServerParameters(
+        command=process.command,
+        args=list(process.args),
+        cwd=process.cwd,
+    )
+    async with stdio_client(parameters) as streams:
+        # ClientSession 1.28.1 is typed against the concrete memory stream
+        # although it consumes only the ObjectReceiveStream interface.
+        strict_read = cast(
+            MemoryObjectReceiveStream[SessionMessage | Exception],
+            StrictMessageStream(streams[0]),
+        )
+        async with ClientSession(strict_read, streams[1]) as downstream:
+            try:
+                with anyio.fail_after(process.startup_timeout_seconds):
+                    await downstream.initialize()
+            except TimeoutError as exc:
+                raise RuntimeError("downstream MCP initialization timed out") from exc
+            yield downstream
+
+
 def create_transparent_proxy(
     process: DownstreamProcess,
 ) -> Server[ProxyContext]:
@@ -83,25 +109,8 @@ def create_transparent_proxy(
 
     @asynccontextmanager
     async def lifespan(_: Server[ProxyContext]) -> AsyncGenerator[ProxyContext]:
-        parameters = StdioServerParameters(
-            command=process.command,
-            args=list(process.args),
-            cwd=process.cwd,
-        )
-        async with stdio_client(parameters) as streams:
-            # ClientSession 1.28.1 is typed against the concrete memory stream
-            # although it consumes only the ObjectReceiveStream interface.
-            strict_read = cast(
-                MemoryObjectReceiveStream[SessionMessage | Exception],
-                StrictMessageStream(streams[0]),
-            )
-            async with ClientSession(strict_read, streams[1]) as downstream:
-                try:
-                    with anyio.fail_after(process.startup_timeout_seconds):
-                        await downstream.initialize()
-                except TimeoutError as exc:
-                    raise RuntimeError("downstream MCP initialization timed out") from exc
-                yield ProxyContext(downstream=downstream)
+        async with open_downstream_session(process) as downstream:
+            yield ProxyContext(downstream=downstream)
 
     proxy = Server[ProxyContext](
         name="mcp-privilege-profiler-proxy",

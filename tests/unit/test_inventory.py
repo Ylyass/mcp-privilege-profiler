@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 
 import mcp.types as types
 import pytest
@@ -12,7 +13,7 @@ from mcp_privprof.adapters.mcp.inventory import (
     snapshot_tool,
     snapshot_toolset,
 )
-from mcp_privprof.domain import DriftKind, DriftSeverity, compare_toolsets
+from mcp_privprof.domain import DriftKind, DriftSeverity, ToolSnapshot, compare_toolsets
 
 
 def tool(
@@ -72,6 +73,19 @@ def test_duplicate_tool_names_are_rejected() -> None:
         snapshot_toolset("lab", [tool("same"), tool("same")])
 
 
+def test_tool_snapshot_rejects_bytes_that_disagree_with_fingerprint() -> None:
+    """A canonical tool definition and its claimed digest are inseparable."""
+    canonical = b'{"name":"read"}'
+    wrong_document = b'{"name":"other"}'
+
+    with pytest.raises(ValueError, match="does not match canonical JSON"):
+        ToolSnapshot(
+            name="read",
+            fingerprint=f"sha256:{sha256(wrong_document).hexdigest()}",
+            canonical_json=canonical,
+        )
+
+
 def test_description_only_drift_is_informational() -> None:
     """Presentation-only change does not become schema widening."""
     previous = snapshot_toolset("lab", [tool("read", description="old")])
@@ -117,4 +131,3 @@ def test_added_and_removed_tools_have_conservative_severity() -> None:
         (DriftKind.REMOVED, DriftSeverity.BREAKING),
         (DriftKind.ADDED, DriftSeverity.SECURITY_WIDENING),
     ]
-

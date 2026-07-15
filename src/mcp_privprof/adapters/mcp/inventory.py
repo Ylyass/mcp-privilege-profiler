@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from hashlib import sha256
+from math import isfinite
 from typing import cast
 
+import anyio
 import mcp.types as types
 import rfc8785
 from mcp import ClientSession
@@ -15,6 +17,37 @@ type JsonScalar = bool | int | float | str | None
 type JsonValue = JsonScalar | list[JsonValue] | dict[str, JsonValue]
 
 MAX_CATALOG_PAGES = 100
+
+
+class McpToolsetSource:
+    """Collect a launch-bound server's catalog through one MCP session."""
+
+    def __init__(
+        self,
+        session: ClientSession,
+        server_id: str,
+        *,
+        catalog_timeout_seconds: float = 30.0,
+    ) -> None:
+        if not server_id:
+            raise ValueError("server_id must not be empty")
+        _validate_catalog_timeout(catalog_timeout_seconds)
+        self._session = session
+        self._server_id = server_id
+        self._catalog_timeout_seconds = catalog_timeout_seconds
+
+    @property
+    def server_id(self) -> str:
+        """Return the trusted server identity supplied at construction."""
+        return self._server_id
+
+    async def collect(self) -> ToolsetSnapshot:
+        """Collect every catalog page from the bound MCP session."""
+        return await collect_toolset(
+            self._session,
+            self._server_id,
+            catalog_timeout_seconds=self._catalog_timeout_seconds,
+        )
 
 
 def canonicalize_json(document: JsonValue) -> bytes:
@@ -55,8 +88,7 @@ def snapshot_toolset(
         raise ValueError("downstream catalog contains duplicate tool names")
 
     catalog_document: JsonValue = [
-        {"name": snapshot.name, "fingerprint": snapshot.fingerprint}
-        for snapshot in snapshots
+        {"name": snapshot.name, "fingerprint": snapshot.fingerprint} for snapshot in snapshots
     ]
     _, fingerprint = fingerprint_json(catalog_document)
     return ToolsetSnapshot(
@@ -69,8 +101,21 @@ def snapshot_toolset(
 async def collect_toolset(
     session: ClientSession,
     server_id: str,
+    *,
+    catalog_timeout_seconds: float = 30.0,
 ) -> ToolsetSnapshot:
-    """Collect every tools/list page and reject cycles or unreasonable depth."""
+    """Collect all tools/list pages within one finite total timeout."""
+    if not server_id:
+        raise ValueError("server_id must not be empty")
+    _validate_catalog_timeout(catalog_timeout_seconds)
+    with anyio.fail_after(catalog_timeout_seconds):
+        return await _collect_toolset_pages(session, server_id)
+
+
+async def _collect_toolset_pages(
+    session: ClientSession,
+    server_id: str,
+) -> ToolsetSnapshot:
     tools: list[types.Tool] = []
     cursor: str | None = None
     seen_cursors: set[str] = set()
@@ -89,3 +134,7 @@ async def collect_toolset(
 
     raise ValueError(f"downstream tools/list exceeded {MAX_CATALOG_PAGES} pages")
 
+
+def _validate_catalog_timeout(value: float) -> None:
+    if not isfinite(value) or value <= 0:
+        raise ValueError("catalog timeout must be positive and finite")

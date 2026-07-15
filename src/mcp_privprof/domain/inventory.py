@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import IntEnum, StrEnum
+from hashlib import sha256
+from re import fullmatch
 from typing import cast
 
 type JsonScalar = bool | int | float | str | None
@@ -22,8 +25,16 @@ class ToolSnapshot:
     def __post_init__(self) -> None:
         if not self.name:
             raise ValueError("tool name must not be empty")
-        if not self.fingerprint.startswith("sha256:"):
-            raise ValueError("tool fingerprint must start with sha256:")
+        _validate_fingerprint(self.fingerprint, "tool fingerprint")
+        expected = f"sha256:{sha256(self.canonical_json).hexdigest()}"
+        if self.fingerprint != expected:
+            raise ValueError("tool fingerprint does not match canonical JSON")
+        try:
+            document = cast(JsonValue, json.loads(self.canonical_json))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise ValueError("tool canonical JSON must be valid UTF-8 JSON") from exc
+        if not isinstance(document, dict) or document.get("name") != self.name:
+            raise ValueError("tool canonical JSON name does not match snapshot name")
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,13 +48,28 @@ class ToolsetSnapshot:
     def __post_init__(self) -> None:
         if not self.server_id:
             raise ValueError("server_id must not be empty")
-        if not self.fingerprint.startswith("sha256:"):
-            raise ValueError("toolset fingerprint must start with sha256:")
+        _validate_fingerprint(self.fingerprint, "toolset fingerprint")
         names = [tool.name for tool in self.tools]
         if names != sorted(names):
             raise ValueError("tool snapshots must be sorted by name")
         if len(names) != len(set(names)):
             raise ValueError("tool snapshot contains duplicate names")
+
+
+@dataclass(frozen=True, slots=True)
+class StoredToolsetSnapshot:
+    """A catalog snapshot together with its durable observation identity."""
+
+    snapshot_id: int
+    captured_at: datetime
+    snapshot: ToolsetSnapshot
+
+    def __post_init__(self) -> None:
+        if self.snapshot_id <= 0:
+            raise ValueError("snapshot_id must be positive")
+        if self.captured_at.tzinfo is None or self.captured_at.utcoffset() is None:
+            raise ValueError("captured_at must include a timezone")
+        object.__setattr__(self, "captured_at", self.captured_at.astimezone(UTC))
 
 
 class DriftSeverity(IntEnum):
@@ -75,7 +101,7 @@ class DriftChange:
 
 @dataclass(frozen=True, slots=True)
 class DriftReport:
-    """Difference between an approved and observed toolset."""
+    """Difference between a previous and current toolset."""
 
     previous_fingerprint: str
     current_fingerprint: str
@@ -156,11 +182,7 @@ def _changed_top_level_fields(
         raise ValueError("tool canonical JSON must contain an object")
     fields = old_document.keys() | new_document.keys()
     return tuple(
-        sorted(
-            field
-            for field in fields
-            if old_document.get(field) != new_document.get(field)
-        )
+        sorted(field for field in fields if old_document.get(field) != new_document.get(field))
     )
 
 
@@ -173,3 +195,8 @@ def _classify_fields(changed_fields: tuple[str, ...]) -> DriftSeverity:
         # change therefore requires the strongest re-review in v0.1.
         return DriftSeverity.SECURITY_WIDENING
     return DriftSeverity.REVIEW_REQUIRED
+
+
+def _validate_fingerprint(value: str, label: str) -> None:
+    if fullmatch(r"sha256:[0-9a-f]{64}", value) is None:
+        raise ValueError(f"{label} must be a lowercase SHA-256 fingerprint")

@@ -38,3 +38,23 @@ async def test_collector_reads_every_catalog_page() -> None:
     assert [tool.name for tool in snapshot.tools] == ["page_one_tool", "page_two_tool"]
     assert snapshot.fingerprint.startswith("sha256:")
 
+
+@pytest.mark.anyio
+async def test_collector_times_out_an_unresponsive_catalog() -> None:
+    """Successful initialization cannot lead to an unbounded tools/list wait."""
+    parameters = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "lab.hanging_catalog_server"],
+        cwd=PROJECT_ROOT,
+    )
+    async with (
+        stdio_client(parameters) as streams,
+        ClientSession(*streams) as session,
+    ):
+        await session.initialize()
+        with pytest.raises(TimeoutError):
+            await collect_toolset(
+                session,
+                server_id="hanging-catalog-lab",
+                catalog_timeout_seconds=0.1,
+            )

@@ -14,6 +14,9 @@ coverage.xml
 htmlcov/
 .coverage
 runtime/
+.mcp-privprof/
+/inventory-report.json
+/inventory-report.md
 *.sqlite
 *.sqlite3
 .env
