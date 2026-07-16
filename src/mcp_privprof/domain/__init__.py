@@ -20,6 +20,8 @@ from mcp_privprof.domain.inventory import (
     ToolSnapshot,
     compare_toolsets,
 )
+from mcp_privprof.domain.limits import LimitType, ToolLimits
+from mcp_privprof.domain.permits import ApprovalPermit, sign_permit, verify_permit
 from mcp_privprof.domain.policy import (
     Policy,
     PolicyDecision,
@@ -47,6 +49,7 @@ from mcp_privprof.domain.profile import (
 __all__ = [
     "EnumConstraint",
     "MaxUtf8BytesConstraint",
+    "LimitType",
     "PathConstraint",
     "PolicyConstraint",
     "UrlConstraint",
@@ -56,6 +59,7 @@ __all__ = [
     "DriftSeverity",
     "StoredToolsetSnapshot",
     "AvailableTool",
+    "ApprovalPermit",
     "CallFact",
     "CallOutcome",
     "CandidateRecommendation",
@@ -74,10 +78,13 @@ __all__ = [
     "ToolEvidence",
     "ToolsetSnapshot",
     "ToolIdentity",
+    "ToolLimits",
     "compare_toolsets",
     "complete_review",
     "constraint_kind",
     "generate_reviewed_policy",
     "normalize_host",
     "normalize_scheme",
+    "sign_permit",
+    "verify_permit",
 ]

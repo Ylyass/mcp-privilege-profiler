@@ -15,6 +15,7 @@ Trusted:
 - reviewed local policy;
 - proxy process and storage directory;
 - local permit secret;
+- ephemeral local approval-control capability;
 - configured Wazuh deployment.
 
 Untrusted:
@@ -40,6 +41,12 @@ Untrusted:
 10. Policy generation requires an exact completed review of sealed evidence.
 11. Every enforced constraint is part of that completed review.
 12. Constraint denials expose argument identity but not the rejected value.
+13. Every non-DENY rule has finite human-reviewed rate, task, and concurrency
+    limits.
+14. A `REQUIRE_APPROVAL` call is forwarded only after one exact unexpired
+    HMAC permit is atomically consumed.
+15. Raw pending approval arguments remain in live proxy memory and the local
+    operator terminal; they are not stored in audit JSONL or SQLite.
 
 ## Stage 6 failure behavior
 
@@ -69,14 +76,37 @@ Untrusted:
   forwarding.
 - A constraint name absent from the reviewed tool schema prevents startup, and
   an otherwise allowed call must still satisfy that exact input schema.
-- `REQUIRE_APPROVAL` fails closed until Stage 8 implements a separate
-  single-use permit channel.
 - Downstream timeout and session failure are bounded and returned as stable
   infrastructure errors. Cancellation continues to propagate rather than being
   fabricated as a decision.
 
-Mandatory audit-before-forward is not present in Stage 7. Therefore the Stage
-8 invariant that an audit-write failure blocks forwarding is not yet claimed.
+## Stage 8 failure behavior
+
+- A non-DENY policy rule without all three finite reviewed limits prevents
+  startup.
+- Persistent per-minute and per-task counters survive proxy restart.
+  Concurrency is bounded within the one v0.1 proxy process.
+- Limit-state failure, limit exhaustion, missing approval, permit verification
+  failure, and mandatory pre-forward audit failure all prevent downstream
+  forwarding.
+- A pre-forward audit reservation is rolled back when the call does not reach
+  the downstream server.
+- Audit append uses the exact regular-file identity established at startup.
+  Replacement, symlink/non-file initialization, append failure, or fsync
+  failure closes the audit gate.
+- A completion-audit failure cannot undo an already completed downstream
+  action. The proxy returns the real result to avoid a blind retry and closes
+  the gate for future calls.
+- Approval uses a separate authenticated loopback endpoint because stdio is
+  occupied by MCP. The capability file is created exclusively, contains a
+  random 256-bit live secret distinct from the in-memory HMAC signing key, and
+  is removed only if its file identity still matches.
+- Approval audit failure prevents permit persistence. Changed arguments,
+  expiry, invalid HMAC, excessive backward clock skew, and atomic replay all
+  fail closed.
+- A restart discards pending raw arguments, the live HMAC secret, and the
+  in-memory approved-permit index. Previously persisted metadata cannot restore
+  authority.
 
 ## Non-goals
 
@@ -84,4 +114,7 @@ Mandatory audit-before-forward is not present in Stage 7. Therefore the Stage
 - preventing every prompt injection;
 - detecting every possible secret;
 - protecting every MCP transport or server;
+- coordinating concurrency across multiple proxy processes;
+- providing remote or unattended approval;
+- encrypting trusted local state at rest;
 - replacing a full SIEM, authorization system, or sandbox.

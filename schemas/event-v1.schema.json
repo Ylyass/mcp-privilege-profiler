@@ -19,11 +19,20 @@
     "decision",
     "reason_code",
     "primary_risk_category",
+    "drift_severity",
+    "limit_type",
     "audit_status"
   ],
   "properties": {
     "event_schema_version": { "const": "1.0" },
-    "event_type": { "type": "string", "minLength": 1 },
+    "event_type": {
+      "enum": [
+        "policy_decision",
+        "tool_completion",
+        "permit_decision",
+        "enforcement_failure"
+      ]
+    },
     "timestamp": { "type": "string", "format": "date-time" },
     "trace_id": { "type": "string", "minLength": 1 },
     "task_id": { "type": "string", "minLength": 1 },
@@ -40,17 +49,51 @@
     "tool_effect": { "enum": ["ALLOW", "REQUIRE_APPROVAL", "DENY"] },
     "decision": { "enum": ["allowed", "denied", "approval_required"] },
     "reason_code": { "type": "string", "minLength": 1 },
-    "primary_risk_category": { "type": "string", "minLength": 1 },
+    "primary_risk_category": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{0,63}$"
+    },
+    "drift_severity": {
+      "enum": [
+        "none",
+        "informational",
+        "review_required",
+        "security_widening",
+        "breaking"
+      ]
+    },
+    "limit_type": {
+      "enum": [
+        "none",
+        "calls_per_minute",
+        "calls_per_task",
+        "concurrent_calls"
+      ]
+    },
     "audit_status": { "enum": ["written", "failed"] },
     "duration_ms": { "type": ["integer", "null"], "minimum": 0 },
     "argument_key_names": {
       "type": "array",
-      "items": { "type": "string" }
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_.-]{0,63}$"
+      }
     },
     "argument_size_bytes": { "type": ["integer", "null"], "minimum": 0 },
     "path_root_alias": { "type": ["string", "null"] },
     "url_scheme": { "type": ["string", "null"] },
-    "url_host": { "type": ["string", "null"] }
+    "url_host": { "type": ["string", "null"] },
+    "capability_tags": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]{0,63}$"
+      }
+    },
+    "permit_id": { "type": ["string", "null"] }
   }
 }
-

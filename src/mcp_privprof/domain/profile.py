@@ -8,6 +8,7 @@ from enum import StrEnum
 from re import fullmatch
 
 from mcp_privprof.domain.constraints import PolicyConstraint, normalize_constraints
+from mcp_privprof.domain.limits import ToolLimits
 from mcp_privprof.domain.policy import Policy, PolicyEffect, PolicyRule, ToolIdentity
 
 
@@ -226,14 +227,27 @@ class ReviewDecision:
     tool_name: str
     effect: PolicyEffect
     constraints: tuple[PolicyConstraint, ...] = ()
+    limits: ToolLimits | None = None
+    primary_risk_category: str = "unspecified"
+    capability_tags: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.tool_name:
             raise ValueError("review tool_name must not be empty")
         normalized = normalize_constraints(self.constraints)
-        if self.effect is PolicyEffect.DENY and normalized:
-            raise ValueError("DENY review decisions cannot contain constraints")
+        if self.effect is PolicyEffect.DENY and (normalized or self.limits is not None):
+            raise ValueError("DENY review decisions cannot contain constraints or limits")
+        # Reuse PolicyRule validation so review and enforcement metadata cannot diverge.
+        validated = PolicyRule(
+            identity=ToolIdentity(server_id="review-validation", tool_name=self.tool_name),
+            effect=self.effect,
+            constraints=normalized,
+            limits=self.limits,
+            primary_risk_category=self.primary_risk_category,
+            capability_tags=self.capability_tags,
+        )
         object.__setattr__(self, "constraints", normalized)
+        object.__setattr__(self, "capability_tags", validated.capability_tags)
 
 
 @dataclass(frozen=True, slots=True)
@@ -323,6 +337,9 @@ def generate_reviewed_policy(
                 ),
                 effect=decision.effect,
                 constraints=decision.constraints,
+                limits=decision.limits,
+                primary_risk_category=decision.primary_risk_category,
+                capability_tags=decision.capability_tags,
             )
             for decision in review.decisions
         ),

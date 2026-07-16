@@ -169,6 +169,9 @@ def build_review_template(report: ProfileEvidenceReportV1) -> ReviewDecisionsV1:
                 tool_name=tool.tool_name,
                 effect=PolicyEffect.DENY,
                 constraints=(),
+                limits=None,
+                primary_risk_category="unspecified",
+                capability_tags=(),
             )
             for tool in report.tools
             if tool.available

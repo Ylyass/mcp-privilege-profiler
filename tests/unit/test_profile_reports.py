@@ -16,6 +16,7 @@ from mcp_privprof.application.profile_reports import (
     render_profile_evidence_json,
     render_profile_evidence_markdown,
 )
+from mcp_privprof.contracts.limits import ToolLimitsV1
 from mcp_privprof.contracts.profile import (
     ProfileEvidenceReportV1,
     ReviewDecisionsV1,
@@ -172,10 +173,24 @@ def test_review_decisions_reject_duplicate_tool_names() -> None:
             evidence_fingerprint=f"sha256:{'f' * 64}",
             decisions=(
                 ReviewDecisionV1(
-                    tool_name="read_fixture", effect=PolicyEffect.ALLOW, constraints=()
+                    tool_name="read_fixture",
+                    effect=PolicyEffect.ALLOW,
+                    constraints=(),
+                    limits=ToolLimitsV1(
+                        max_calls_per_minute=60,
+                        max_calls_per_task=100,
+                        max_concurrent_calls=2,
+                    ),
+                    primary_risk_category="file_read",
+                    capability_tags=("filesystem",),
                 ),
                 ReviewDecisionV1(
-                    tool_name="read_fixture", effect=PolicyEffect.DENY, constraints=()
+                    tool_name="read_fixture",
+                    effect=PolicyEffect.DENY,
+                    constraints=(),
+                    limits=None,
+                    primary_risk_category="file_read",
+                    capability_tags=("filesystem",),
                 ),
             ),
         )

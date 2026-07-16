@@ -8,7 +8,7 @@ from pathlib import Path
 import aiosqlite
 import anyio
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 
 _CREATE_MIGRATIONS = """
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -167,10 +167,78 @@ _MIGRATION_3 = (
     """,
 )
 
+_MIGRATION_4 = (
+    """
+    ALTER TABLE profile_review_decisions
+    ADD COLUMN limits_json BLOB NOT NULL DEFAULT X'6E756C6C'
+    """,
+    """
+    ALTER TABLE profile_review_decisions
+    ADD COLUMN primary_risk_category TEXT NOT NULL DEFAULT 'unspecified'
+    CHECK (
+        length(primary_risk_category) BETWEEN 1 AND 64
+        AND primary_risk_category NOT GLOB '*[^a-z0-9_]*'
+    )
+    """,
+    """
+    ALTER TABLE profile_review_decisions
+    ADD COLUMN capability_tags_json BLOB NOT NULL DEFAULT X'5B5D'
+    """,
+    """
+    CREATE TABLE enforcement_task_usage (
+        task_id TEXT NOT NULL CHECK (length(task_id) > 0),
+        policy_id TEXT NOT NULL CHECK (length(policy_id) > 0),
+        tool_name TEXT NOT NULL CHECK (length(tool_name) > 0),
+        call_count INTEGER NOT NULL CHECK (call_count >= 0),
+        PRIMARY KEY (task_id, policy_id, tool_name)
+    )
+    """,
+    """
+    CREATE TABLE enforcement_rate_usage (
+        task_id TEXT NOT NULL CHECK (length(task_id) > 0),
+        policy_id TEXT NOT NULL CHECK (length(policy_id) > 0),
+        tool_name TEXT NOT NULL CHECK (length(tool_name) > 0),
+        window_start INTEGER NOT NULL CHECK (window_start >= 0),
+        call_count INTEGER NOT NULL CHECK (call_count >= 0),
+        PRIMARY KEY (task_id, policy_id, tool_name, window_start)
+    )
+    """,
+    """
+    CREATE TABLE approval_permits (
+        permit_id TEXT PRIMARY KEY CHECK (length(permit_id) > 0),
+        request_id TEXT NOT NULL UNIQUE CHECK (length(request_id) > 0),
+        task_id TEXT NOT NULL CHECK (length(task_id) > 0),
+        policy_id TEXT NOT NULL CHECK (length(policy_id) > 0),
+        server_id TEXT NOT NULL CHECK (length(server_id) > 0),
+        tool_name TEXT NOT NULL CHECK (length(tool_name) > 0),
+        argument_digest TEXT NOT NULL CHECK (
+            length(argument_digest) = 71
+            AND substr(argument_digest, 1, 7) = 'sha256:'
+            AND substr(argument_digest, 8) NOT GLOB '*[^0-9a-f]*'
+        ),
+        issued_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        nonce TEXT NOT NULL UNIQUE CHECK (length(nonce) >= 32),
+        permit_mac TEXT NOT NULL CHECK (
+            length(permit_mac) = 64
+            AND permit_mac NOT GLOB '*[^0-9a-f]*'
+        ),
+        decision TEXT NOT NULL CHECK (decision = 'approved'),
+        use_count INTEGER NOT NULL DEFAULT 0 CHECK (use_count IN (0, 1)),
+        consumed_at TEXT,
+        CHECK (
+            (use_count = 0 AND consumed_at IS NULL)
+            OR (use_count = 1 AND consumed_at IS NOT NULL)
+        )
+    )
+    """,
+)
+
 _MIGRATIONS: dict[int, tuple[str, ...]] = {
     1: _MIGRATION_1,
     2: _MIGRATION_2,
     3: _MIGRATION_3,
+    4: _MIGRATION_4,
 }
 
 

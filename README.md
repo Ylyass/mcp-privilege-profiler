@@ -37,12 +37,18 @@ The current verified build includes:
 - deny-by-default human review files and review-gated policy generation;
 - reviewed path, URL, enum, and UTF-8 byte constraints;
 - exact-fingerprint enforcement with filtered `tools/list`;
-- pre-forward denial of unknown, DENY, constrained, and unapproved calls; and
+- reviewed per-tool rate, task, and concurrency limits;
+- privacy-minimized, fsynced JSONL decisions before downstream forwarding;
+- single-use, expiring HMAC approval permits over exact argument digests;
+- an authenticated local approval channel that keeps raw arguments out of
+  process arguments, audit JSONL, and SQLite;
+- pre-forward denial of unknown, DENY, constrained, over-limit, unaudited, and
+  unapproved calls; and
 - immediate fail-closed handling of live tool-catalog changes.
 
-Limits, mandatory audit delivery, approval permits, Wazuh content, hosted CI,
-and release publication are not implemented yet. See the
-[roadmap](docs/roadmap.md) for the order and current boundary.
+The Wazuh bridge, benchmark, hosted CI, external review, and release
+publication remain. See the [roadmap](docs/roadmap.md) for the order and
+current boundary.
 
 ## Current commands
 
@@ -82,20 +88,22 @@ flow, technology roles, evidence rules, and recovery command.
 
 After review and policy generation, run the live enforcement proxy:
 
-    uv run mcp-privprof enforce --policy policy.json --path-root PROJECT_ROOT=lab/fixtures --cwd . -- python -m lab.server
+    uv run mcp-privprof enforce --policy policy.json --task-id task-001 --agent-id agent-1 --audit-log .mcp-privprof/events.jsonl --state-database .mcp-privprof/enforcement.sqlite3 --approval-control .mcp-privprof/approval-control.json --path-root PROJECT_ROOT=lab/fixtures --cwd . -- python -m lab.server
 
 The path-root option is required only when the reviewed policy refers to that
 symbolic alias. Enforce mode verifies the exact live toolset, exposes only
-`ALLOW` and `REQUIRE_APPROVAL` tools, and forwards only passing `ALLOW` calls.
-`REQUIRE_APPROVAL` fails closed until Stage 8 adds single-use permits. See the
-[enforcement guide](docs/enforcement.md) for constraints, failure behavior, and
-stable reason codes.
+`ALLOW` and `REQUIRE_APPROVAL` tools, enforces the reviewed limits, and writes
+the mandatory decision event before forwarding.
 
-## Planned commands
+When a `REQUIRE_APPROVAL` call returns a request ID, the local operator can
+inspect the exact pending arguments and approve one exact retry:
 
-    mcp-privprof permit create
+    uv run mcp-privprof permit create --request REQUEST_ID --control .mcp-privprof/approval-control.json
 
-The permit command is not implemented yet.
+The approval-control file is an ephemeral capability containing a live secret.
+Keep it accessible only to the trusted local operator and never commit it.
+See the [enforcement guide](docs/enforcement.md) for the exact call order,
+privacy boundary, limits, permit behavior, and stable reason codes.
 
 ## License
 

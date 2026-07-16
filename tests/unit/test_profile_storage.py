@@ -20,6 +20,7 @@ from mcp_privprof.domain import (
     ProfileStatus,
     ReviewDecision,
     RunStatus,
+    ToolLimits,
 )
 
 NOW = datetime(2026, 7, 15, tzinfo=UTC)
@@ -132,6 +133,9 @@ async def test_profile_review_and_policy_gate_round_trip(tmp_path: Path) -> None
                 "read_fixture",
                 PolicyEffect.ALLOW,
                 (PathConstraint("relative_path", ("PROJECT_ROOT",)),),
+                ToolLimits(60, 100, 2),
+                "file_read",
+                ("filesystem",),
             ),
             ReviewDecision("simulated_command_run", PolicyEffect.DENY),
         ),
@@ -165,6 +169,9 @@ async def test_schema_one_database_migrates_to_current_schema(tmp_path: Path) ->
     stored = await inventory_repository.save(snapshot_toolset("lab", [_tool("read")]), NOW)
     with sqlite3.connect(database_path) as database:
         for table in (
+            "approval_permits",
+            "enforcement_rate_usage",
+            "enforcement_task_usage",
             "profile_review_decisions",
             "profile_reviews",
             "profile_calls",
@@ -187,9 +194,14 @@ async def test_schema_one_database_migrates_to_current_schema(tmp_path: Path) ->
         decision_columns = [
             row[1] for row in database.execute("PRAGMA table_info(profile_review_decisions)")
         ]
-    assert version == 3
+    assert version == 4
     assert profile_table == ("profile_sessions",)
-    assert decision_columns[-1] == "constraints_json"
+    assert decision_columns[-4:] == [
+        "constraints_json",
+        "limits_json",
+        "primary_risk_category",
+        "capability_tags_json",
+    ]
 
 
 @pytest.mark.anyio
@@ -227,8 +239,14 @@ async def test_schema_two_review_rows_gain_empty_constraints_on_migration(
         ),
     )
     with sqlite3.connect(database_path) as database:
+        database.execute("DROP TABLE approval_permits")
+        database.execute("DROP TABLE enforcement_rate_usage")
+        database.execute("DROP TABLE enforcement_task_usage")
+        database.execute("ALTER TABLE profile_review_decisions DROP COLUMN capability_tags_json")
+        database.execute("ALTER TABLE profile_review_decisions DROP COLUMN primary_risk_category")
+        database.execute("ALTER TABLE profile_review_decisions DROP COLUMN limits_json")
         database.execute("ALTER TABLE profile_review_decisions DROP COLUMN constraints_json")
-        database.execute("DELETE FROM schema_migrations WHERE version = 3")
+        database.execute("DELETE FROM schema_migrations WHERE version >= 3")
 
     migrated_repository = SqliteProfileRepository(database_path)
     await migrated_repository.initialize()

@@ -22,6 +22,7 @@ from mcp_privprof.domain import (
     ProfileStatus,
     ReviewDecision,
     RunStatus,
+    ToolLimits,
 )
 
 NOW = datetime(2026, 7, 15, tzinfo=UTC)
@@ -115,6 +116,9 @@ async def test_completed_review_renders_schema_valid_policy(tmp_path: Path) -> N
                 "read_fixture",
                 PolicyEffect.ALLOW,
                 (PathConstraint("relative_path", ("PROJECT_ROOT",)),),
+                ToolLimits(60, 100, 2),
+                "file_read",
+                ("filesystem",),
             ),
         ),
     )
@@ -136,6 +140,13 @@ async def test_completed_review_renders_schema_valid_policy(tmp_path: Path) -> N
                 }
             ],
             "effect": "ALLOW",
+            "limits": {
+                "max_calls_per_minute": 60,
+                "max_calls_per_task": 100,
+                "max_concurrent_calls": 2,
+            },
+            "primary_risk_category": "file_read",
+            "capability_tags": ["filesystem"],
             "tool_name": "read_fixture",
         }
     ]

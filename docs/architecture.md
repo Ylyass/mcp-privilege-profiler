@@ -109,13 +109,17 @@ evidence again, so a stale or substituted review cannot generate policy.
 
 ## Enforcement path
 
-    reviewed policy-v1 + trusted path-root bindings
+    reviewed policy-v1 + trusted task/agent IDs + path-root bindings
       -> strict policy and constraint validation
       -> initialized downstream session
       -> complete catalog collection and exact fingerprint gate
       -> filtered tools/list
       -> exact decision and in-memory constraint checks
-      -> downstream tools/call only for a passing ALLOW rule
+      -> persistent rate/task reservation + in-process concurrency reservation
+      -> exact single-use permit check when approval is required
+      -> privacy-minimized decision event appended and fsynced
+      -> downstream tools/call
+      -> privacy-minimized completion event
 
 The policy carries one rule for every tool in the reviewed catalog and declares
 `default_effect: DENY`. Startup requires exact rule coverage and the exact
@@ -131,9 +135,34 @@ kind and argument name, never the rejected value.
 
 The enforcement catalog is a single complete filtered page containing ALLOW
 and REQUIRE_APPROVAL definitions. DENY definitions are absent. Direct calls to
-DENY or unknown names are still rejected before forwarding. In Stage 7,
-REQUIRE_APPROVAL is discoverable but always returns a stable error because the
-single-use permit workflow belongs to Stage 8.
+DENY or unknown names are still rejected before forwarding.
+
+Every non-DENY review decision includes finite positive per-minute, per-task,
+and concurrent-call limits. The fixed-window minute and task counters persist
+in SQLite so a proxy restart does not reset them. Concurrency is maintained
+inside the one v0.1 proxy process and is released in a `finally` path. A
+reservation is rolled back when the call was not forwarded, including
+mandatory pre-forward audit failure.
+
+The audit builder starts from an explicit allowlist of scalar metadata. It may
+record sorted argument key names, canonical byte size, normalized URL
+scheme/host, symbolic path-root alias, risk category, capability tags,
+fingerprints, decisions, and timing. It never copies argument values or tool
+result bodies. Each JSONL object is appended and fsynced before a permitted
+downstream call. The sink remains bound to the exact regular file opened at
+startup; write failure or file replacement closes the enforcement gate.
+
+`REQUIRE_APPROVAL` arguments remain only in live proxy memory. The proxy
+publishes an ephemeral capability file for an authenticated loopback control
+endpoint. The local permit CLI uses that separate channel to show the exact
+pending request to the operator. Approval first writes its audit event, then
+persists an HMAC-SHA256 permit containing an RFC 8785 argument digest, expiry,
+nonce, and single-use state—but no raw arguments. Only the exact retry can
+atomically consume it. Changed arguments, expiry, invalid MAC, excessive
+backward clock skew, or replay fail closed. A proxy restart invalidates live
+pending requests and its in-memory HMAC secret. The control capability and
+permit-signing key are independent random 256-bit secrets; the signing key is
+never written to the control file.
 
 A downstream tools-list change invalidates the gate synchronously in the MCP
 message handler. A separate worker recollects the complete catalog; only the
@@ -144,15 +173,15 @@ receive loop while leaving no interval where changed definitions are trusted.
 
 | Layer | Responsibility |
 |---|---|
-| Domain | Profile/run state machines, exact review coverage, default-deny policy and constraint facts |
-| Application | Evidence aggregation, fingerprints, lifecycle orchestration, constraint evaluation |
-| Ports | Storage interfaces independent of SQLite |
-| MCP adapters | Strict downstream session, proxy forwarding, catalog invalidation |
-| SQLite adapters | Atomic migrations and privacy-safe durable state |
+| Domain | Profile/run state machines, exact review coverage, default-deny policy, constraint, limit, and permit facts |
+| Application | Evidence aggregation, fingerprints, lifecycle orchestration, constraint evaluation, audit construction, limit coordination, and permit lifecycle |
+| Ports | Audit and storage interfaces independent of JSONL and SQLite |
+| MCP adapters | Strict downstream session, proxy forwarding, catalog invalidation, and local approval control |
+| SQLite adapters | Atomic migrations, persistent usage counters, permit state, and privacy-safe evidence |
 | Contracts | Strict versioned JSON evidence, review, policy, and event models |
 | CLI | Trusted composition, bounded file input, atomic artifact writes |
 
 Policy enforcement, catalog minimization, and reviewed path/URL/enum/byte
-constraints are active. Limits, mandatory pre-forward audit, approval permits,
-and Wazuh event delivery are not active yet; they are the Stage 8 and Stage 9
-boundaries.
+constraints, limits, mandatory pre-forward audit, and approval permits are
+active. Wazuh event ingestion and detection content are the next Stage 9
+boundary.

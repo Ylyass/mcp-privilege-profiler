@@ -87,7 +87,10 @@ report for the same sealed facts produces the same identity.
 ### 4. Review every available tool
 
 Read the evidence, edit each effect to `ALLOW`, `REQUIRE_APPROVAL`, or `DENY`,
-and then complete the review:
+and then complete the review. Every non-DENY decision must also contain finite
+`max_calls_per_minute`, `max_calls_per_task`, and `max_concurrent_calls`
+values, one lowercase `primary_risk_category`, and zero or more lowercase
+`capability_tags`. DENY keeps `limits: null` and cannot contain constraints.
 
     uv run mcp-privprof review complete --review-id review-001 --reviewer operator@example.test --decisions review-decisions.json --database .mcp-privprof/state.sqlite3
 
@@ -101,8 +104,9 @@ matches the sealed profile.
 
 Policy generation has no path around the completed-review record. The policy
 contains the reviewed profile ID, exact toolset fingerprint, effects, and any
-reviewed constraints. Stage 7 enforces it and filters `tools/list`; see the
-[enforcement guide](enforcement.md).
+reviewed constraints, limits, and risk metadata. Stages 7 and 8 enforce it,
+filter `tools/list`, write mandatory privacy-minimized audit, and provide exact
+single-use approval; see the [enforcement guide](enforcement.md).
 
 ## How evidence is interpreted
 
@@ -127,11 +131,13 @@ leftover run explicitly before sealing:
     uv run mcp-privprof profile abort-run --run-id run-001 --database .mcp-privprof/state.sqlite3
 
 The local operator and storage directory remain trusted. SQLite schema version
-3 stores reviewed constraints while retaining no argument or result columns in
-`profile_calls`. The default evidence
-is data minimization, not encryption; operators must still protect the database
-and report files.
+4 stores reviewed constraints, limit/risk metadata, enforcement counters, and
+permit metadata while retaining no argument or result columns in
+`profile_calls` or `approval_permits`. The default evidence is data
+minimization, not encryption; operators must still protect the database and
+report files.
 
 This stage recommends candidates and generates a reviewed policy artifact.
-Stage 7 now enforces effects and exact argument constraints. Mandatory audit
-JSONL, limits, approval permits, and Wazuh events remain later roadmap stages.
+Stages 7 and 8 now enforce effects, exact argument constraints, limits,
+mandatory audit JSONL, and single-use approval permits. Wazuh ingestion and
+detection content remain Stage 9.

@@ -20,5 +20,6 @@ destructive proof-of-concept payloads.
 - no raw arguments or results in default audit events;
 - fail-closed behavior for mandatory audit failure;
 - reviewed policies linked to tool fingerprints;
+- finite human-reviewed limits on every non-DENY rule;
+- exact, expiring, single-use approval permits without persisted raw arguments;
 - documented limitations and reproducible tests.
-

@@ -11,6 +11,12 @@ import anyio
 
 from mcp_privprof.adapters.sqlite.constraints import decode_constraints, encode_constraints
 from mcp_privprof.adapters.sqlite.database import configure_database, initialize_database
+from mcp_privprof.adapters.sqlite.policy_metadata import (
+    decode_capability_tags,
+    decode_limits,
+    encode_capability_tags,
+    encode_limits,
+)
 from mcp_privprof.domain.policy import PolicyEffect
 from mcp_privprof.domain.profile import (
     AvailableTool,
@@ -351,8 +357,9 @@ class SqliteProfileRepository:
                 await database.executemany(
                     """
                     INSERT INTO profile_review_decisions(
-                        review_id, ordinal, tool_name, effect, constraints_json
-                    ) VALUES (?, ?, ?, ?, ?)
+                        review_id, ordinal, tool_name, effect, constraints_json,
+                        limits_json, primary_risk_category, capability_tags_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     [
                         (
@@ -361,6 +368,9 @@ class SqliteProfileRepository:
                             decision.tool_name,
                             decision.effect.value,
                             encode_constraints(decision.constraints),
+                            encode_limits(decision.limits),
+                            decision.primary_risk_category,
+                            encode_capability_tags(decision.capability_tags),
                         )
                         for ordinal, decision in enumerate(review.decisions)
                     ],
@@ -390,7 +400,8 @@ class SqliteProfileRepository:
             row = cast(tuple[object, ...], raw_row)
             cursor = await database.execute(
                 """
-                SELECT tool_name, effect, constraints_json
+                SELECT tool_name, effect, constraints_json, limits_json,
+                       primary_risk_category, capability_tags_json
                 FROM profile_review_decisions
                 WHERE review_id = ?
                 ORDER BY ordinal
@@ -411,6 +422,9 @@ class SqliteProfileRepository:
                         tool_name=str(decision_row[0]),
                         effect=PolicyEffect(str(decision_row[1])),
                         constraints=decode_constraints(decision_row[2]),
+                        limits=decode_limits(decision_row[3]),
+                        primary_risk_category=str(decision_row[4]),
+                        capability_tags=decode_capability_tags(decision_row[5]),
                     )
                     for decision_row in decision_rows
                 ),

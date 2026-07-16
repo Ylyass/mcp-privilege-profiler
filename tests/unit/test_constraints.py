@@ -196,13 +196,27 @@ def test_contract_rejects_constraints_on_deny_and_strict_boolean_values() -> Non
     path = {"kind": "path", "argument": "path", "path_roots": ["PROJECT_ROOT"]}
     with pytest.raises(ValidationError):
         PolicyRuleV1.model_validate(
-            {"tool_name": "read", "effect": PolicyEffect.DENY, "constraints": [path]}
+            {
+                "tool_name": "read",
+                "effect": PolicyEffect.DENY,
+                "constraints": [path],
+                "limits": None,
+                "primary_risk_category": "file_read",
+                "capability_tags": ["filesystem"],
+            }
         )
     with pytest.raises(ValidationError):
         PolicyRuleV1.model_validate(
             {
                 "tool_name": "write",
                 "effect": "ALLOW",
+                "limits": {
+                    "max_calls_per_minute": 60,
+                    "max_calls_per_task": 100,
+                    "max_concurrent_calls": 2,
+                },
+                "primary_risk_category": "file_write",
+                "capability_tags": ["filesystem"],
                 "constraints": [
                     {
                         "kind": "max_utf8_bytes",
@@ -232,6 +246,13 @@ def test_review_constraint_document_validates_public_json_schema() -> None:
                             "path_roots": ["PROJECT_ROOT"],
                         }
                     ],
+                    "limits": {
+                        "max_calls_per_minute": 60,
+                        "max_calls_per_task": 100,
+                        "max_concurrent_calls": 2,
+                    },
+                    "primary_risk_category": "file_read",
+                    "capability_tags": ["filesystem"],
                 }
             ],
         }

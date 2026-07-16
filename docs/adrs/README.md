@@ -9,3 +9,4 @@ consequences. Decisions are changed by a superseding ADR, not silently edited.
 - [0004: Sealed evidence and exact human review gate](0004-reviewed-evidence-gate.md)
 - [0005: RFC 8785 complete-tool fingerprints](0005-rfc8785-tool-fingerprints.md)
 - [0006: Reviewed constraints and exact enforcement](0006-reviewed-constraints-and-exact-enforcement.md)
+- [0007: Reviewed limits, mandatory audit, and single-use permits](0007-limits-audit-and-single-use-permits.md)

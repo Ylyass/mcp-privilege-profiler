@@ -11,6 +11,7 @@ from enum import StrEnum
 from re import fullmatch
 
 from mcp_privprof.domain.constraints import PolicyConstraint, normalize_constraints
+from mcp_privprof.domain.limits import ToolLimits
 
 
 class PolicyEffect(StrEnum):
@@ -40,12 +41,17 @@ class PolicyRule:
     identity: ToolIdentity
     effect: PolicyEffect
     constraints: tuple[PolicyConstraint, ...] = ()
+    limits: ToolLimits | None = None
+    primary_risk_category: str = "unspecified"
+    capability_tags: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         normalized = normalize_constraints(self.constraints)
-        if self.effect is PolicyEffect.DENY and normalized:
-            raise ValueError("DENY rules cannot contain constraints")
+        if self.effect is PolicyEffect.DENY and (normalized or self.limits is not None):
+            raise ValueError("DENY rules cannot contain constraints or limits")
+        _validate_risk_metadata(self.primary_risk_category, self.capability_tags)
         object.__setattr__(self, "constraints", normalized)
+        object.__setattr__(self, "capability_tags", tuple(sorted(self.capability_tags)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,3 +110,18 @@ class Policy:
             effect=PolicyEffect.DENY,
             reason_code="NO_EXACT_POLICY_RULE",
         )
+
+
+def _validate_risk_metadata(
+    primary_risk_category: str,
+    capability_tags: tuple[str, ...],
+) -> None:
+    pattern = r"[a-z][a-z0-9_]{0,63}"
+    if fullmatch(pattern, primary_risk_category) is None:
+        raise ValueError("primary risk category must be a lowercase scalar identifier")
+    if len(capability_tags) > 64:
+        raise ValueError("capability tags must not contain more than 64 entries")
+    if len(capability_tags) != len(set(capability_tags)):
+        raise ValueError("capability tags must not contain duplicates")
+    if any(fullmatch(pattern, item) is None for item in capability_tags):
+        raise ValueError("capability tags must be lowercase scalar identifiers")

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import json
 import os
 import tempfile
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from functools import partial
 from pathlib import Path
 from typing import Annotated, Never
@@ -13,6 +14,8 @@ import anyio
 import typer
 
 from mcp_privprof import __version__
+from mcp_privprof.adapters.approval_control import approve_request, inspect_approval
+from mcp_privprof.adapters.audit import JsonlAuditSink
 from mcp_privprof.adapters.mcp.enforcement_proxy import run_enforcement_proxy
 from mcp_privprof.adapters.mcp.inventory import McpToolsetSource
 from mcp_privprof.adapters.mcp.profile_proxy import run_profile_proxy
@@ -20,12 +23,20 @@ from mcp_privprof.adapters.mcp.transparent_proxy import (
     DownstreamProcess,
     open_downstream_session,
 )
-from mcp_privprof.adapters.sqlite import SqliteInventoryRepository, SqliteProfileRepository
+from mcp_privprof.adapters.sqlite import (
+    SqliteEnforcementRepository,
+    SqliteInventoryRepository,
+    SqlitePermitRepository,
+    SqliteProfileRepository,
+)
 from mcp_privprof.application import InventoryService, ProfileService
+from mcp_privprof.application.audit import EnforcementIdentity
 from mcp_privprof.application.constraints import (
     constraint_domain,
     prepare_path_roots,
 )
+from mcp_privprof.application.limits import LimitCoordinator
+from mcp_privprof.application.permits import PermitService, generate_permit_secret
 from mcp_privprof.application.policies import policy_contract, policy_domain, render_policy_json
 from mcp_privprof.application.profile_reports import (
     build_review_template,
@@ -41,6 +52,7 @@ from mcp_privprof.application.reports import (
 from mcp_privprof.contracts.inventory import InventoryReportV1
 from mcp_privprof.contracts.policy import PolicyV1
 from mcp_privprof.contracts.profile import ProfileEvidenceReportV1, ReviewDecisionsV1
+from mcp_privprof.domain.limits import ToolLimits
 from mcp_privprof.domain.policy import Policy
 from mcp_privprof.domain.profile import ProfileSession, ProfileStatus, ReviewDecision, RunStatus
 
@@ -54,9 +66,14 @@ app = typer.Typer(
 profile_app = typer.Typer(help="Collect labeled, privacy-safe task evidence.", no_args_is_help=True)
 review_app = typer.Typer(help="Complete an evidence-bound human review.", no_args_is_help=True)
 policy_app = typer.Typer(help="Generate policy only from a completed review.", no_args_is_help=True)
+permit_app = typer.Typer(
+    help="Approve one live exact call through local IPC.",
+    no_args_is_help=True,
+)
 app.add_typer(profile_app, name="profile")
 app.add_typer(review_app, name="review")
 app.add_typer(policy_app, name="policy")
+app.add_typer(permit_app, name="permit")
 
 
 @app.callback()
@@ -80,6 +97,38 @@ def enforce(
         Path,
         typer.Option("--policy", help="Reviewed policy-v1 JSON file."),
     ],
+    task_id: Annotated[
+        str,
+        typer.Option("--task-id", help="Trusted identity for this bounded task."),
+    ],
+    agent_id: Annotated[
+        str,
+        typer.Option("--agent-id", help="Trusted identity for this agent session."),
+    ],
+    audit_log: Annotated[
+        Path,
+        typer.Option("--audit-log", help="Mandatory fsynced event-v1 JSONL path."),
+    ],
+    state_database: Annotated[
+        Path,
+        typer.Option("--state-database", help="Persistent limit and permit state."),
+    ] = Path(".mcp-privprof/enforcement.sqlite3"),
+    approval_control: Annotated[
+        Path | None,
+        typer.Option(
+            "--approval-control",
+            help="Ephemeral authenticated local approval endpoint file.",
+        ),
+    ] = None,
+    approval_ttl: Annotated[
+        float,
+        typer.Option(
+            "--approval-ttl",
+            min=1.0,
+            max=3600.0,
+            help="Pending approval lifetime in seconds.",
+        ),
+    ] = 300.0,
     path_root: Annotated[
         list[str] | None,
         typer.Option(
@@ -102,10 +151,26 @@ def enforce(
 ) -> None:
     """Run a reviewed, exact-match, deny-by-default MCP enforcement proxy."""
     _require_downstream(downstream)
+    _require_nonblank(("--task-id", task_id), ("--agent-id", agent_id))
+    paths = [policy_file, audit_log, state_database]
+    if approval_control is not None:
+        paths.append(approval_control)
+    _require_distinct_paths(*paths)
     try:
         contract = PolicyV1.model_validate_json(_read_bounded(policy_file))
         policy = policy_domain(contract)
         roots = prepare_path_roots(_parse_path_root_bindings(path_root or []))
+        identity = EnforcementIdentity(task_id=task_id, agent_id=agent_id)
+        state_database.parent.mkdir(parents=True, exist_ok=True)
+        permit_secret = generate_permit_secret()
+        control_secret = generate_permit_secret()
+        audit_sink = JsonlAuditSink(audit_log)
+        limit_coordinator = LimitCoordinator(SqliteEnforcementRepository(state_database))
+        permit_service = PermitService(
+            SqlitePermitRepository(state_database),
+            secret=permit_secret,
+            ttl=timedelta(seconds=approval_ttl),
+        )
         process = _downstream_process(
             downstream,
             cwd=cwd,
@@ -118,6 +183,12 @@ def enforce(
                 process=process,
                 policy=policy,
                 path_roots=roots,
+                identity=identity,
+                audit_sink=audit_sink,
+                limits=limit_coordinator,
+                permits=permit_service,
+                approval_control_path=approval_control,
+                approval_control_secret=(control_secret if approval_control is not None else None),
             )
         )
     except typer.BadParameter:
@@ -126,6 +197,40 @@ def enforce(
         # This command's stdout is the MCP transport; diagnostics must use stderr.
         typer.echo(f"Enforcement failed safely ({type(exc).__name__}): {exc}", err=True)
         raise typer.Exit(code=1) from exc
+
+
+@permit_app.command("create")
+def permit_create(
+    request_id: Annotated[
+        str,
+        typer.Option("--request", help="Approval request ID returned by enforce mode."),
+    ],
+    control: Annotated[
+        Path,
+        typer.Option("--control", help="Live proxy approval-control file."),
+    ],
+) -> None:
+    """Inspect exact in-memory arguments and approve one single-use retry."""
+    _require_nonblank(("--request", request_id))
+    try:
+        response = anyio.run(partial(inspect_approval, control_path=control, request_id=request_id))
+        request = response.get("request")
+        if not isinstance(request, dict):
+            raise RuntimeError("approval endpoint returned no request")
+        typer.echo("Exact pending call (arguments are shown only in this terminal):")
+        typer.echo(json.dumps(request, ensure_ascii=False, indent=2, sort_keys=True))
+        if not typer.confirm("Approve exactly this call once?", default=False):
+            typer.echo("Approval cancelled; no permit was created.")
+            raise typer.Exit(code=1)
+        approved = anyio.run(partial(approve_request, control_path=control, request_id=request_id))
+        permit = approved.get("permit")
+        if not isinstance(permit, dict) or not isinstance(permit.get("permit_id"), str):
+            raise RuntimeError("approval endpoint returned no permit")
+    except typer.Exit:
+        raise
+    except Exception as exc:
+        _fail("Permit creation", exc)
+    typer.echo(f"Created single-use permit {permit['permit_id']}. Retry the exact MCP call.")
 
 
 @app.command()
@@ -580,6 +685,17 @@ async def _complete_review(
                 tool_name=decision.tool_name,
                 effect=decision.effect,
                 constraints=tuple(constraint_domain(item) for item in decision.constraints),
+                limits=(
+                    ToolLimits(
+                        max_calls_per_minute=decision.limits.max_calls_per_minute,
+                        max_calls_per_task=decision.limits.max_calls_per_task,
+                        max_concurrent_calls=decision.limits.max_concurrent_calls,
+                    )
+                    if decision.limits is not None
+                    else None
+                ),
+                primary_risk_category=decision.primary_risk_category,
+                capability_tags=decision.capability_tags,
             )
             for decision in decisions.decisions
         ),

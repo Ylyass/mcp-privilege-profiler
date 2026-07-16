@@ -12,17 +12,20 @@ order so later security decisions are built on verified lower layers.
 | 4. Transparent stdio proxy | Verified | Real client to proxy to server flow, failures, pagination, cancellation, and shutdown |
 | 5. Inventory, fingerprints, and drift | Verified | Persistence, reports, live refresh component, and conservative comparison work |
 | 6. Profiling and human review | Verified | Launch-bound scenarios, privacy-safe evidence, exact review gate, and policy artifacts work |
-| 7. Enforcement and catalog minimization | Current verified milestone | Reviewed policy, filtered catalog, exact constraints, stable errors, and fail-closed drift work |
-| 8. Limits, audit, and permits | Next | Privacy-minimized mandatory audit, call limits, and single-use approvals |
-| 9. Wazuh bridge | Not started | Tested rules, fixtures, and live JSONL ingestion |
+| 7. Enforcement and catalog minimization | Verified | Reviewed policy, filtered catalog, exact constraints, stable errors, and fail-closed drift work |
+| 8. Limits, audit, and permits | Current verified milestone | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
+| 9. Wazuh bridge | Next | Tested rules, fixtures, and live JSONL ingestion |
 | 10. Benchmark and complete test matrix | Not started | Reproducible measured security and performance evidence |
 | 11. Documentation, external review, release | Not started | Clean-clone reviews and open-source release artifacts |
 
-Stage 7 enforce mode verifies the exact complete catalog before startup, hides
-DENY entries, blocks unknown and denied calls before forwarding, evaluates
-reviewed path/URL/enum/byte constraints, and invalidates immediately on a live
-catalog-change notification.
+Stage 8 enforce mode keeps the Stage 7 exact catalog and constraint gates, then
+reserves reviewed per-tool limits, consumes an exact single-use approval when
+required, and appends plus fsyncs a privacy-minimized decision before
+forwarding. Persistent rate/task counters survive restart, concurrency is
+bounded inside the v0.1 proxy process, audit failure prevents downstream
+execution, and raw argument/result values remain absent from JSONL and SQLite.
 
-The next implementation stage is Stage 8: add privacy-minimized mandatory
-audit-before-forward, per-tool rate limits, task and concurrency budgets, and a
-separate single-use permit workflow for `REQUIRE_APPROVAL`.
+The next implementation stage is Stage 9: pin the Wazuh deployment, ingest the
+local event-v1 JSONL through the supported agent path, add custom rules with
+positive and near-miss fixtures, automate `wazuh-logtest`, and verify live
+agent-to-manager alerting.

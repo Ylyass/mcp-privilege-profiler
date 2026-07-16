@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+from functools import partial
 from pathlib import Path
 
 import anyio
@@ -186,6 +187,13 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
     for decision in decisions["decisions"]:
         if decision["tool_name"] == "read_fixture":
             decision["effect"] = "ALLOW"
+            decision["limits"] = {
+                "max_calls_per_minute": 60,
+                "max_calls_per_task": 100,
+                "max_concurrent_calls": 2,
+            }
+            decision["primary_risk_category"] = "file_read"
+            decision["capability_tags"] = ["filesystem"]
             decision["constraints"] = [
                 {
                     "kind": "path",
@@ -195,6 +203,13 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
             ]
         if decision["tool_name"] == "simulated_command_run":
             decision["effect"] = "REQUIRE_APPROVAL"
+            decision["limits"] = {
+                "max_calls_per_minute": 10,
+                "max_calls_per_task": 20,
+                "max_concurrent_calls": 1,
+            }
+            decision["primary_risk_category"] = "command_execution"
+            decision["capability_tags"] = ["process"]
     decisions_file.write_text(json.dumps(decisions), encoding="utf-8")
 
     reviewed = await run_sync_in_worker_thread(
@@ -241,13 +256,28 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
     assert set(effects.values()) == {"ALLOW", "REQUIRE_APPROVAL", "DENY"}
     read_rule = next(rule for rule in policy.tools if rule.tool_name == "read_fixture")
     assert read_rule.constraints[0].kind == "path"
+    assert read_rule.limits is not None
+    assert read_rule.limits.max_calls_per_task == 100
 
+    audit_log = tmp_path / "state" / "enforcement-events.jsonl"
+    enforcement_state = tmp_path / "state" / "enforcement.sqlite3"
+    approval_control = tmp_path / "state" / "approval-control.json"
     enforce_parameters = StdioServerParameters(
         command=str(CLI_EXE),
         args=[
             "enforce",
             "--policy",
             str(policy_file),
+            "--task-id",
+            "task-real-1",
+            "--agent-id",
+            "agent-real-1",
+            "--audit-log",
+            str(audit_log),
+            "--state-database",
+            str(enforcement_state),
+            "--approval-control",
+            str(approval_control),
             "--path-root",
             f"PROJECT_ROOT={PROJECT_ROOT / 'lab' / 'fixtures'}",
             "--cwd",
@@ -295,7 +325,56 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
                 {"command": "harmless fixture"},
             )
             assert approval.isError is True
-            assert approval.structuredContent == {"reason_code": "MCP_PRIVPROF_APPROVAL_REQUIRED"}
+            assert approval.structuredContent is not None
+            assert approval.structuredContent["reason_code"] == "MCP_PRIVPROF_APPROVAL_REQUIRED"
+            request_id = approval.structuredContent["request_id"]
+            assert isinstance(request_id, str)
+
+            permit = await run_sync_in_worker_thread(
+                partial(
+                    runner.invoke,
+                    app,
+                    [
+                        "permit",
+                        "create",
+                        "--request",
+                        request_id,
+                        "--control",
+                        str(approval_control),
+                    ],
+                    input="y\n",
+                )
+            )
+            assert permit.exit_code == 0, permit.output
+            assert "Created single-use permit" in permit.stdout
+
+            changed_arguments = await session.call_tool(
+                "simulated_command_run",
+                {"command": "different harmless fixture"},
+            )
+            assert changed_arguments.isError is True
+            assert changed_arguments.structuredContent is not None
+            assert (
+                changed_arguments.structuredContent["reason_code"]
+                == "MCP_PRIVPROF_APPROVAL_REQUIRED"
+            )
+
+            approved = await session.call_tool(
+                "simulated_command_run",
+                {"command": "harmless fixture"},
+            )
+            assert approved.isError is not True
+            assert isinstance(approved.content[0], TextContent)
+            assert "SIMULATED_ONLY" in approved.content[0].text
+
+            used = await session.call_tool(
+                "simulated_command_run",
+                {"command": "harmless fixture"},
+            )
+            assert used.isError is True
+            assert used.structuredContent is not None
+            assert used.structuredContent["reason_code"] == "MCP_PRIVPROF_APPROVAL_REQUIRED"
+            assert used.structuredContent["request_id"] != request_id
 
             denied = await session.call_tool("simulated_credential_read", {})
             assert denied.isError is True
@@ -304,6 +383,19 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
             unknown = await session.call_tool("not_in_catalog", {})
             assert unknown.isError is True
             assert unknown.structuredContent == {"reason_code": "MCP_PRIVPROF_UNKNOWN_TOOL"}
+
+    audit_records = [
+        json.loads(line) for line in audit_log.read_text(encoding="utf-8").splitlines()
+    ]
+    assert {"policy_decision", "permit_decision", "tool_completion"} <= {
+        record["event_type"] for record in audit_records
+    }
+    serialized_audit = audit_log.read_text(encoding="utf-8")
+    assert "project/README.md" not in serialized_audit
+    assert "harmless fixture" not in serialized_audit
+    assert "different harmless fixture" not in serialized_audit
+    assert b"harmless fixture" not in enforcement_state.read_bytes()
+    assert b"different harmless fixture" not in enforcement_state.read_bytes()
 
 
 @pytest.mark.anyio
