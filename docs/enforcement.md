@@ -262,11 +262,15 @@ immediately. A background collection may reopen it only when the complete live
 fingerprint is exactly the approved fingerprint. A changed catalog stays
 closed until a new profile, review, and policy are completed.
 
-## Current Stage 8 boundary
+## Current enforcement and detection boundary
 
-This stage produces local `event-v1` JSONL but does not yet configure Wazuh to
-ingest it or ship detection rules. Cross-process concurrency, remote approval,
-remote MCP transports, multi-server aggregation, key recovery, and automatic
-log rotation are outside the v0.1 single-process local-stdio boundary. Stage 9
-adds the pinned Wazuh bridge and detection pack without changing the
-pre-forward enforcement decision.
+Stage 8 produces local `event-v1` JSONL. Stage 9 now provides a pinned,
+local-only Wazuh definition, read-only agent ingestion, custom rules, and
+positive/near-miss fixtures without changing the pre-forward enforcement
+decision. Static validation passes; real `wazuh-logtest` and live
+agent-to-manager delivery remain pending until the local Docker/WSL
+prerequisites are available.
+
+Cross-process concurrency, remote approval, remote MCP transports, multi-server
+aggregation, key recovery, and automatic log rotation remain outside the v0.1
+single-process local-stdio boundary.

@@ -44,11 +44,16 @@ The current verified build includes:
   process arguments, audit JSONL, and SQLite;
 - pre-forward denial of unknown, DENY, constrained, over-limit, unaudited, and
   unapproved calls; and
-- immediate fail-closed handling of live tool-catalog changes.
+- immediate fail-closed handling of live tool-catalog changes;
+- a pinned, local-only Wazuh 4.14.6 lab definition with read-only JSONL
+  ingestion; and
+- 11 custom Wazuh alert rules with 22 contract-valid positive and near-miss
+  fixture cases.
 
-The Wazuh bridge, benchmark, hosted CI, external review, and release
-publication remain. See the [roadmap](docs/roadmap.md) for the order and
-current boundary.
+Real `wazuh-logtest` execution, live agent-to-manager ingestion, the benchmark,
+hosted CI, external review, and release publication remain. See the
+[Wazuh bridge guide](docs/wazuh-bridge.md) and [roadmap](docs/roadmap.md) for
+the verified boundary.
 
 ## Current commands
 

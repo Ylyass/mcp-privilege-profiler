@@ -1,0 +1,49 @@
+# Local-only overlay for the official wazuh-docker v4.14.6 single-node stack.
+# Requires Docker Compose 2.24.4+ for !override.
+services:
+  wazuh.manager:
+    ports: !override
+      - "127.0.0.1:1514:1514"
+      - "127.0.0.1:1515:1515"
+      - "127.0.0.1:55000:55000"
+    volumes:
+      - type: bind
+        source: "${MCP_PRIVPROF_RULES_PATH:?set MCP_PRIVPROF_RULES_PATH}"
+        target: /var/ossec/etc/rules/mcp_privprof_rules.xml
+        read_only: true
+        bind:
+          create_host_path: false
+
+  wazuh.indexer:
+    ports: !override []
+
+  wazuh.dashboard:
+    ports: !override
+      - "127.0.0.1:443:5601"
+
+  wazuh.agent:
+    image: wazuh/wazuh-agent:4.14.6
+    hostname: mcp-privprof-wazuh-agent
+    restart: unless-stopped
+    depends_on:
+      - wazuh.manager
+    environment:
+      WAZUH_MANAGER_SERVER: wazuh.manager
+      WAZUH_MANAGER_PORT: "1514"
+      WAZUH_REGISTRATION_SERVER: wazuh.manager
+      WAZUH_REGISTRATION_PORT: "1515"
+      WAZUH_AGENT_NAME: mcp-privprof-lab
+      WAZUH_AGENT_GROUP: default
+    volumes:
+      - type: bind
+        source: "${MCP_PRIVPROF_AGENT_CONFIG_PATH:?set MCP_PRIVPROF_AGENT_CONFIG_PATH}"
+        target: /wazuh-config-mount/etc/ossec.conf
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: "${MCP_PRIVPROF_EVENTS_PATH:?set MCP_PRIVPROF_EVENTS_PATH}"
+        target: /var/log/mcp-privprof/events.jsonl
+        read_only: true
+        bind:
+          create_host_path: false

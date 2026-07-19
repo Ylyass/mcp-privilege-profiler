@@ -183,5 +183,6 @@ receive loop while leaving no interval where changed definitions are trusted.
 
 Policy enforcement, catalog minimization, and reviewed path/URL/enum/byte
 constraints, limits, mandatory pre-forward audit, and approval permits are
-active. Wazuh event ingestion and detection content are the next Stage 9
-boundary.
+active. The Stage 9 Wazuh rules, fixtures, and pinned local lab definition now
+exist and pass static validation. Real `wazuh-logtest` execution and live
+agent-to-manager event delivery remain the Stage 9 exit boundary.

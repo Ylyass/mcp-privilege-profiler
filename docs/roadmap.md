@@ -13,8 +13,8 @@ order so later security decisions are built on verified lower layers.
 | 5. Inventory, fingerprints, and drift | Verified | Persistence, reports, live refresh component, and conservative comparison work |
 | 6. Profiling and human review | Verified | Launch-bound scenarios, privacy-safe evidence, exact review gate, and policy artifacts work |
 | 7. Enforcement and catalog minimization | Verified | Reviewed policy, filtered catalog, exact constraints, stable errors, and fail-closed drift work |
-| 8. Limits, audit, and permits | Current verified milestone | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
-| 9. Wazuh bridge | Next | Tested rules, fixtures, and live JSONL ingestion |
+| 8. Limits, audit, and permits | Verified | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
+| 9. Wazuh bridge | In progress | Static pack and local lab are verified; real Wazuh analysis and live JSONL ingestion require Docker Desktop and WSL 2 |
 | 10. Benchmark and complete test matrix | Not started | Reproducible measured security and performance evidence |
 | 11. Documentation, external review, release | Not started | Clean-clone reviews and open-source release artifacts |
 
@@ -25,7 +25,10 @@ forwarding. Persistent rate/task counters survive restart, concurrency is
 bounded inside the v0.1 proxy process, audit failure prevents downstream
 execution, and raw argument/result values remain absent from JSONL and SQLite.
 
-The next implementation stage is Stage 9: pin the Wazuh deployment, ingest the
-local event-v1 JSONL through the supported agent path, add custom rules with
-positive and near-miss fixtures, automate `wazuh-logtest`, and verify live
-agent-to-manager alerting.
+Stage 9 now has a pinned Wazuh 4.14.6 local-only deployment overlay, a
+read-only JSONL agent input, 11 custom alert rules, 22 positive/near-miss
+fixtures, and automated static contract validation. The helper also automates
+real `wazuh-logtest` execution and the full local lab, but those two runtime
+checks have not run on this computer because Docker Desktop and WSL 2 are not
+installed. Stage 9 closes only after the real analysis engine and live
+agent-to-manager path both pass.

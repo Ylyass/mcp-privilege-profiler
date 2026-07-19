@@ -12,3 +12,4 @@ actual supported security boundary, not future intentions.
 - [Implementation roadmap](roadmap.md)
 - [Threat model](threat-model.md)
 - [Technology baseline](technology-baseline.md)
+- [Wazuh bridge and detection pack](wazuh-bridge.md)

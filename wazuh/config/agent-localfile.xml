@@ -1,0 +1,9 @@
+<!-- Append this project-owned block to the official v4.14.6 agent ossec.conf. -->
+<ossec_config>
+  <localfile>
+    <location>/var/log/mcp-privprof/events.jsonl</location>
+    <log_format>json</log_format>
+    <only-future-events>yes</only-future-events>
+    <label key="@source">mcp_privprof</label>
+  </localfile>
+</ossec_config>

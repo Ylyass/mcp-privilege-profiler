@@ -1,0 +1,111 @@
+<!--
+  MCP Privilege Profiler Wazuh rules
+  SPDX-License-Identifier: Apache-2.0
+
+  Rule IDs are inside Wazuh's documented 100000-120000 custom range.
+  All event fields use anchored PCRE2 expressions to avoid substring matches.
+-->
+<group name="mcp_privprof,">
+  <rule id="100000" level="0">
+    <decoded_as>json</decoded_as>
+    <field name="@source" type="pcre2">^mcp_privprof$</field>
+    <field name="event_schema_version" type="pcre2">^1\.0$</field>
+    <description>MCP Privilege Profiler event-v1 grouping rule.</description>
+    <options>no_full_log</options>
+  </rule>
+
+  <rule id="100010" level="5">
+    <if_sid>100000</if_sid>
+    <field name="event_type" type="pcre2">^policy_decision$</field>
+    <field name="decision" type="pcre2">^denied$</field>
+    <description>MCP Privilege Profiler denied a tool call.</description>
+    <options>no_full_log</options>
+    <group>policy_denial,</group>
+  </rule>
+
+  <rule id="100101" level="12">
+    <if_sid>100000</if_sid>
+    <field name="server_trust" type="pcre2">^unapproved$</field>
+    <description>MCP Privilege Profiler observed a request for an unapproved server.</description>
+    <options>no_full_log</options>
+    <group>server_trust_violation,</group>
+  </rule>
+
+  <rule id="100102" level="12">
+    <if_sid>100000</if_sid>
+    <field name="drift_severity" type="pcre2">^security_widening$</field>
+    <description>MCP Privilege Profiler detected security-widening tool drift.</description>
+    <options>no_full_log</options>
+    <group>tool_drift,</group>
+  </rule>
+
+  <rule id="100103" level="10">
+    <if_sid>100010</if_sid>
+    <field name="primary_risk_category" type="pcre2">^credential_access$</field>
+    <description>MCP Privilege Profiler denied a credential-access capability.</description>
+    <options>no_full_log</options>
+    <group>credential_access,</group>
+  </rule>
+
+  <rule id="100104" level="10">
+    <if_sid>100010</if_sid>
+    <field name="primary_risk_category" type="pcre2">^command_execution$</field>
+    <description>MCP Privilege Profiler denied a command-execution capability.</description>
+    <options>no_full_log</options>
+    <group>command_execution,</group>
+  </rule>
+
+  <rule id="100105" level="8">
+    <if_sid>100010</if_sid>
+    <field name="primary_risk_category" type="pcre2">^network_access$</field>
+    <field name="reason_code" type="pcre2">^MCP_PRIVPROF_CONSTRAINT_URL_NOT_ALLOWED$</field>
+    <description>MCP Privilege Profiler denied network access outside reviewed URL constraints.</description>
+    <options>no_full_log</options>
+    <group>network_constraint,</group>
+  </rule>
+
+  <rule id="100106" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100010</if_matched_sid>
+    <same_field>task_id</same_field>
+    <description>MCP Privilege Profiler recorded repeated denials for one task.</description>
+    <options>no_full_log</options>
+    <group>repeated_denial,</group>
+  </rule>
+
+  <rule id="100107" level="7">
+    <if_sid>100010</if_sid>
+    <field name="reason_code" type="pcre2">^MCP_PRIVPROF_LIMIT_EXCEEDED$</field>
+    <field name="limit_type" type="pcre2">^(?:calls_per_minute|calls_per_task|concurrent_calls)$</field>
+    <description>MCP Privilege Profiler denied a call because a reviewed limit was exhausted.</description>
+    <options>no_full_log</options>
+    <group>limit_exceeded,</group>
+  </rule>
+
+  <rule id="100108" level="12">
+    <if_sid>100000</if_sid>
+    <field name="event_type" type="pcre2">^enforcement_failure$</field>
+    <field name="reason_code" type="pcre2">^MCP_PRIVPROF_POLICY_(?:INVALID|LOAD_FAILED|LIMITS_REQUIRED|CATALOG_INCOMPLETE|CONSTRAINT_TARGET_INVALID)$</field>
+    <description>MCP Privilege Profiler reported a policy validation or load failure.</description>
+    <options>no_full_log</options>
+    <group>policy_failure,</group>
+  </rule>
+
+  <rule id="100109" level="14">
+    <if_sid>100000</if_sid>
+    <field name="event_type" type="pcre2">^enforcement_failure$</field>
+    <field name="audit_status" type="pcre2">^failed$</field>
+    <description>MCP Privilege Profiler reported failure of its mandatory audit path.</description>
+    <options>no_full_log</options>
+    <group>audit_failure,</group>
+  </rule>
+
+  <rule id="100110" level="12">
+    <if_sid>100000</if_sid>
+    <field name="event_type" type="pcre2">^policy_decision$</field>
+    <field name="decision" type="pcre2">^denied$</field>
+    <field name="reason_code" type="pcre2">^MCP_PRIVPROF_PERMIT_REPLAY$</field>
+    <description>MCP Privilege Profiler denied an approval-permit replay attempt.</description>
+    <options>no_full_log</options>
+    <group>permit_replay,</group>
+  </rule>
+</group>

@@ -1,0 +1,183 @@
+{
+  "schema_version": "1.0",
+  "wazuh_image": "wazuh/wazuh-manager:4.14.6",
+  "event_source_label": "mcp_privprof",
+  "cases": [
+    {
+      "case_id": "generic-denial-positive",
+      "kind": "positive",
+      "target_rule_id": 100010,
+      "fixture": "positive/generic-denial.jsonl",
+      "expected_rule_id": 100010,
+      "expected_level": 5
+    },
+    {
+      "case_id": "generic-denial-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100010,
+      "fixture": "near-miss/generic-denial.jsonl",
+      "expected_rule_id": 100000,
+      "expected_level": 0
+    },
+    {
+      "case_id": "unapproved-server-positive",
+      "kind": "positive",
+      "target_rule_id": 100101,
+      "fixture": "positive/unapproved-server.jsonl",
+      "expected_rule_id": 100101,
+      "expected_level": 12
+    },
+    {
+      "case_id": "unapproved-server-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100101,
+      "fixture": "near-miss/unapproved-server.jsonl",
+      "expected_rule_id": 100010,
+      "expected_level": 5
+    },
+    {
+      "case_id": "security-widening-drift-positive",
+      "kind": "positive",
+      "target_rule_id": 100102,
+      "fixture": "positive/security-widening-drift.jsonl",
+      "expected_rule_id": 100102,
+      "expected_level": 12
+    },
+    {
+      "case_id": "security-widening-drift-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100102,
+      "fixture": "near-miss/security-widening-drift.jsonl",
+      "expected_rule_id": 100000,
+      "expected_level": 0
+    },
+    {
+      "case_id": "credential-access-denied-positive",
+      "kind": "positive",
+      "target_rule_id": 100103,
+      "fixture": "positive/credential-access-denied.jsonl",
+      "expected_rule_id": 100103,
+      "expected_level": 10
+    },
+    {
+      "case_id": "credential-access-denied-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100103,
+      "fixture": "near-miss/credential-access-denied.jsonl",
+      "expected_rule_id": 100000,
+      "expected_level": 0
+    },
+    {
+      "case_id": "command-execution-denied-positive",
+      "kind": "positive",
+      "target_rule_id": 100104,
+      "fixture": "positive/command-execution-denied.jsonl",
+      "expected_rule_id": 100104,
+      "expected_level": 10
+    },
+    {
+      "case_id": "command-execution-denied-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100104,
+      "fixture": "near-miss/command-execution-denied.jsonl",
+      "expected_rule_id": 100010,
+      "expected_level": 5
+    },
+    {
+      "case_id": "unapproved-network-denied-positive",
+      "kind": "positive",
+      "target_rule_id": 100105,
+      "fixture": "positive/unapproved-network-denied.jsonl",
+      "expected_rule_id": 100105,
+      "expected_level": 8
+    },
+    {
+      "case_id": "unapproved-network-denied-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100105,
+      "fixture": "near-miss/unapproved-network-denied.jsonl",
+      "expected_rule_id": 100010,
+      "expected_level": 5
+    },
+    {
+      "case_id": "repeated-denials-positive",
+      "kind": "positive",
+      "target_rule_id": 100106,
+      "fixture": "positive/repeated-denials.jsonl",
+      "expected_rule_id": 100106,
+      "expected_level": 10
+    },
+    {
+      "case_id": "repeated-denials-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100106,
+      "fixture": "near-miss/repeated-denials.jsonl",
+      "expected_rule_id": 100010,
+      "expected_level": 5
+    },
+    {
+      "case_id": "limit-exceeded-positive",
+      "kind": "positive",
+      "target_rule_id": 100107,
+      "fixture": "positive/limit-exceeded.jsonl",
+      "expected_rule_id": 100107,
+      "expected_level": 7
+    },
+    {
+      "case_id": "limit-exceeded-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100107,
+      "fixture": "near-miss/limit-exceeded.jsonl",
+      "expected_rule_id": 100010,
+      "expected_level": 5
+    },
+    {
+      "case_id": "policy-load-failure-positive",
+      "kind": "positive",
+      "target_rule_id": 100108,
+      "fixture": "positive/policy-load-failure.jsonl",
+      "expected_rule_id": 100108,
+      "expected_level": 12
+    },
+    {
+      "case_id": "policy-load-failure-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100108,
+      "fixture": "near-miss/policy-load-failure.jsonl",
+      "expected_rule_id": 100000,
+      "expected_level": 0
+    },
+    {
+      "case_id": "audit-failure-positive",
+      "kind": "positive",
+      "target_rule_id": 100109,
+      "fixture": "positive/audit-failure.jsonl",
+      "expected_rule_id": 100109,
+      "expected_level": 14
+    },
+    {
+      "case_id": "audit-failure-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100109,
+      "fixture": "near-miss/audit-failure.jsonl",
+      "expected_rule_id": 100000,
+      "expected_level": 0
+    },
+    {
+      "case_id": "permit-replay-positive",
+      "kind": "positive",
+      "target_rule_id": 100110,
+      "fixture": "positive/permit-replay.jsonl",
+      "expected_rule_id": 100110,
+      "expected_level": 12
+    },
+    {
+      "case_id": "permit-replay-near-miss",
+      "kind": "near_miss",
+      "target_rule_id": 100110,
+      "fixture": "near-miss/permit-replay.jsonl",
+      "expected_rule_id": 100000,
+      "expected_level": 0
+    }
+  ]
+}

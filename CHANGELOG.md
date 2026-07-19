@@ -59,3 +59,7 @@ All notable changes are documented here.
 - Added property, unit, and real MCP integration proof that raw arguments and
   results remain absent from JSONL/SQLite, changed arguments do not consume an
   exact approval, and audit failure prevents downstream execution.
+- Added a pinned, local-only Wazuh 4.14.6 lab overlay with read-only JSONL
+  ingestion and verified official source hashes.
+- Added 11 custom Wazuh alert rules, 22 positive/near-miss fixture cases,
+  static contract validation, and an opt-in pinned `wazuh-logtest` runner.
