@@ -48,10 +48,11 @@ The current verified build includes:
 - a pinned, local-only Wazuh 4.14.6 lab definition with read-only JSONL
   ingestion; and
 - 11 custom Wazuh alert rules with 22 contract-valid positive and near-miss
-  fixture cases.
+  fixture cases that pass the real Wazuh 4.14.6 analysis engine; and
+- a repeatable live probe proving proxy denial, agent delivery, rule `100103`,
+  and searchable indexer ingestion for one exact trace.
 
-Real `wazuh-logtest` execution, live agent-to-manager ingestion, the benchmark,
-hosted CI, external review, and release publication remain. See the
+The benchmark, hosted CI, external review, and release publication remain. See the
 [Wazuh bridge guide](docs/wazuh-bridge.md) and [roadmap](docs/roadmap.md) for
 the verified boundary.
 

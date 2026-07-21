@@ -30,6 +30,7 @@ flowchart LR
     J["Privacy-minimized<br/>event-v1 JSONL"]
     A["Wazuh agent<br/>log collector"]
     M["Wazuh manager<br/>rules and alerts"]
+    I["Wazuh indexer<br/>searchable alerts"]
     D["Wazuh dashboard"]
 
     H -->|"MCP over stdio"| P
@@ -37,7 +38,8 @@ flowchart LR
     P --> J
     J -->|"read-only mount"| A
     A --> M
-    M --> D
+    M --> I
+    I --> D
 ```
 
 An email summarizer is a later demonstration, not the first test. A suitable
@@ -55,15 +57,18 @@ current deterministic lab.
 3. **Passed:** static Wazuh validation parses the XML rule graph, validates
    every fixture against `event-v1`, and proves each positive/near-miss pair
    differs on its target condition.
-4. **Pending Docker/WSL:** `wazuh-logtest` runs those cases in the real pinned
-   Wazuh manager image.
-5. **Pending Docker/WSL:** the live lab mounts the proxy event file read-only
-   into a Wazuh agent and verifies agent-to-manager alert delivery.
+4. **Passed:** `wazuh-logtest` runs all 22 cases in a temporary, network-isolated
+   Wazuh 4.14.6 manager and asserts the final rule, level, and decoder.
+5. **Passed:** the bounded live probe made an official MCP client request a
+   harmless simulated credential tool through the real proxy. The proxy denied
+   it, agent `001` delivered the event, manager rule `100103` fired at level 10,
+   and the same trace became searchable in the green single-node indexer.
 6. **Later optional demonstration:** introduce a real MCP host and a dedicated
    test account only after the security layers pass.
 
-Static validation is useful but is not a substitute for steps 4 and 5. The
-Stage 9 exit gate remains open until both real-Wazuh checks pass.
+Static validation is useful but is not a substitute for steps 4 and 5. Both
+real-engine and live-ingestion gates now pass, so the Wazuh bridge stage is
+verified.
 
 ## Version and deployment boundary
 
@@ -99,12 +104,19 @@ configuration:
 - `location` is `/var/log/mcp-privprof/events.jsonl`;
 - `log_format` is `json`;
 - `only-future-events` is `yes`; and
-- the namespaced `@source=mcp_privprof` label is added by Wazuh.
+- the namespaced `@source=mcp_privprof` label is added by Wazuh; and
+- `out_format` prefixes the forwarded copy with `mcp_privprof: `.
 
-The grouping rule requires both `@source=mcp_privprof` and exact event schema
-version `1.0`. This prevents an unrelated JSON log with a similar field from
-entering this rule tree. Wazuh's built-in JSON decoder is used; no custom
-decoder is needed.
+The persisted audit file remains pure JSONL. The prefix exists only between
+the Wazuh agent and manager. A minimal custom decoder claims that prefix and
+delegates the remaining object to Wazuh's official `JSON_Decoder`. The grouping
+rule then requires decoder `mcp_privprof`, `@source=mcp_privprof`, and exact
+event schema version `1.0`.
+
+This routing is necessary because real Wazuh 4.14.6 testing showed that
+built-in Suricata rule 86600 otherwise claims generic JSON containing both
+`timestamp` and `event_type` before the project rule tree. ADR 0009 records the
+failed assumption and correction.
 
 ## Detection contract
 
@@ -177,6 +189,18 @@ and may download the pinned Wazuh images:
 
     uv run python -m wazuh.lab up
     uv run python -m wazuh.lab status
+
+With the lab running, execute the bounded end-to-end probe:
+
+    uv run python -m wazuh.live_probe
+
+The probe creates a temporary synthetic all-deny policy solely to isolate this
+bridge test. It uses the official MCP client, the real enforcement proxy, and
+the harmless local MCP server. It intentionally requests the hidden
+`simulated_credential_read` tool, verifies that the request was not forwarded,
+and waits for the exact trace to reach rule `100103` from test agent `001`.
+Temporary policy and enforcement-state files use the operating-system temporary
+directory; the privacy-minimized event remains in the configured JSONL audit.
 
 Stop containers without deleting evidence or named volumes:
 

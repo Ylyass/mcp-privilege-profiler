@@ -38,7 +38,7 @@ Keep the name MCP Privilege Profiler as a temporary working name until the final
 | Publish as AgentFence | AgentFence is already used by an AI security product, a PyPI project, and a 2026 research paper | Do not publish under AgentFence |
 | MCP Scan is a runtime proxy with tool pinning and whitelists | The current repository redirects to Snyk Agent Scan, which is primarily inspection and inventory; runtime guardrails are a separate Invariant project | Rewrite the competitor matrix from primary sources |
 | Wazuh 4.12.0 is the baseline | Current stable Wazuh Docker is 4.14.6 | Pin the demo to 4.14.6; exclude prereleases |
-| A custom Wazuh decoder is needed for raw JSON | Wazuh has a built-in JSON decoder for raw JSON events | Emit one pure JSON object per line and ship rules, fixtures, and ingestion configuration |
+| The built-in Wazuh JSON decoder is sufficient for routing | It parses `event-v1`, but real Wazuh 4.14.6 testing showed built-in Suricata rule 86600 claims generic JSON with `timestamp` and `event_type` first | Keep pure JSONL at rest; add a transport-only prefix and a dedicated decoder that delegates parsing to `JSON_Decoder` |
 | event_schema_version regex is valid | The proposed regex matches dots, not version 1.0 | Use an exact PCRE2 match such as ^1\.0$ or an exact scalar comparison |
 | Negative lookahead is safe in the default Wazuh regex engine | Lookaheads require PCRE2 | Prefer a scalar server_trust field; avoid clever negative regex |
 | Stable MCP and mcp==2.0.0b1 can be optional dependencies in one environment | mcp<2 and mcp==2.0.0b1 are mutually incompatible | Keep v0.1 on mcp 1.28.1; use a separate post-release RC workspace |
@@ -530,12 +530,17 @@ Do not claim that arbitrary unknown secrets can always be detected.
 
 ## 13. Wazuh 4.14.6 integration
 
-Use the built-in Wazuh JSON decoder. Do not ship the supplied custom decoder for pure JSONL.
+Keep the audit artifact as pure JSONL. At the Wazuh transport boundary, prefix
+the forwarded record and use a dedicated source decoder that delegates JSON
+field extraction to Wazuh's built-in `JSON_Decoder`. This avoids built-in rule
+precedence collisions without duplicating JSON parsing logic. See ADR 0009.
 
 Ship:
 
     wazuh/
       compose.override.yml
+      decoders/
+        mcp_privprof_decoders.xml
       agent/
         ossec.conf
       rules/
@@ -923,6 +928,11 @@ Exit gate:
 - near-miss fixtures do not alert;
 - the live compromised-agent sequence appears in Wazuh.
 
+Verified on 2026-07-22: all 22 positive/near-miss cases passed the pinned real
+analysis engine, and a harmless live credential-access attempt was denied by
+the proxy, delivered by Wazuh agent `001`, matched rule `100103` at level 10,
+and became searchable in the green single-node indexer under the same trace.
+
 ### Phase 10 — Tests, benchmark, and performance, 10 hours
 
 Tasks:
@@ -1122,7 +1132,7 @@ Required ADRs:
 5. RFC 8785 fingerprints;
 6. raw arguments excluded from audit;
 7. fail-closed mandatory audit;
-8. Wazuh built-in JSON decoding;
+8. Wazuh prefixed transport and project-specific `JSON_Decoder` routing;
 9. local HMAC permits;
 10. no dashboard or remote transport in v0.1.
 

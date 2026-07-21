@@ -8,6 +8,12 @@ services:
       - "127.0.0.1:55000:55000"
     volumes:
       - type: bind
+        source: "${MCP_PRIVPROF_DECODER_PATH:?set MCP_PRIVPROF_DECODER_PATH}"
+        target: /var/ossec/etc/decoders/mcp_privprof_decoders.xml
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
         source: "${MCP_PRIVPROF_RULES_PATH:?set MCP_PRIVPROF_RULES_PATH}"
         target: /var/ossec/etc/rules/mcp_privprof_rules.xml
         read_only: true

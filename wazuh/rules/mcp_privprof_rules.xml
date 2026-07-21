@@ -7,7 +7,7 @@
 -->
 <group name="mcp_privprof,">
   <rule id="100000" level="0">
-    <decoded_as>json</decoded_as>
+    <decoded_as>mcp_privprof</decoded_as>
     <field name="@source" type="pcre2">^mcp_privprof$</field>
     <field name="event_schema_version" type="pcre2">^1\.0$</field>
     <description>MCP Privilege Profiler event-v1 grouping rule.</description>

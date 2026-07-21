@@ -267,9 +267,9 @@ closed until a new profile, review, and policy are completed.
 Stage 8 produces local `event-v1` JSONL. Stage 9 now provides a pinned,
 local-only Wazuh definition, read-only agent ingestion, custom rules, and
 positive/near-miss fixtures without changing the pre-forward enforcement
-decision. Static validation passes; real `wazuh-logtest` and live
-agent-to-manager delivery remain pending until the local Docker/WSL
-prerequisites are available.
+decision. Static validation and all 22 real Wazuh 4.14.6 `wazuh-logtest` cases
+pass. A bounded live proxy denial also passed agent-to-manager rule matching
+and indexer ingestion under one exact trace ID.
 
 Cross-process concurrency, remote approval, remote MCP transports, multi-server
 aggregation, key recovery, and automatic log rotation remain outside the v0.1

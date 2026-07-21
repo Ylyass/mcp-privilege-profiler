@@ -1,14 +1,14 @@
 # ADR 0008: Pinned Wazuh JSONL bridge and fixture-tested rules
 
-Status: accepted
+Status: accepted; decoder decision amended by ADR 0009
 Date: 2026-07-19
 
 ## Context
 
 ADR 0007 made the local privacy-minimized JSONL audit mandatory before a
 downstream tool call. Stage 9 must turn that evidence into Wazuh detections
-without weakening the enforcement path, exposing the local lab, inventing a
-custom JSON decoder, or making fixture-only behavior look live.
+without weakening the enforcement path, exposing the local lab, or making
+fixture-only behavior look live.
 
 The word "agent" is ambiguous in this system. The AI agent or MCP host chooses
 tools. A Wazuh agent is a separate log collector. The Wazuh component must
@@ -25,8 +25,9 @@ copying or modifying the GPL-licensed official deployment in this repository.
 Mount the project JSONL file read-only into the official Wazuh agent container.
 Configure `localfile` with `log_format=json`, `only-future-events=yes`, and the
 Wazuh-added `@source=mcp_privprof` label. Require that label and exact event
-schema version in the level-zero grouping rule. Use Wazuh's built-in JSON
-decoder.
+schema version in the level-zero grouping rule. ADR 0009 amends the original
+built-in-only decoder choice after real Wazuh testing exposed a collision with
+built-in Suricata rule 86600.
 
 Keep all custom IDs inside `100000`–`120000`. Use anchored PCRE2 field
 expressions and scalar event fields. Suppress `full_log` duplication. Provide a
@@ -51,14 +52,14 @@ enforcement.
 
 ## Consequences
 
-The detection pack is reproducible, based on maintained official inputs, and
-can be tested without a custom decoder. The project does not vendor the Wazuh
-Docker repository or mix its GPL deployment files into the Apache-2.0 source
-tree.
+The detection pack is reproducible and based on maintained official inputs.
+The project does not vendor the Wazuh Docker repository or mix its GPL
+deployment files into the Apache-2.0 source tree.
 
-Static tests remain available on machines without Docker. Real Wazuh rule and
-live ingestion claims remain incomplete until Docker/WSL prerequisites are
-available and both dynamic gates pass.
+Static tests remain available on machines without Docker. ADR 0009 records the
+subsequent real-engine correction and successful 22-case Wazuh test. The later
+bounded live probe also passed the full proxy-to-agent-to-manager-to-indexer
+gate; the Wazuh bridge guide records that operational evidence.
 
 The full single-node lab is intentionally heavier than a mocked rule engine,
 but it provides manager, indexer, dashboard, and agent evidence matching the

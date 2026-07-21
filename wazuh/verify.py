@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
+import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
@@ -19,13 +21,17 @@ from jsonschema import Draft202012Validator, FormatChecker
 from mcp_privprof.contracts.event import AuditEventV1
 
 ROOT = Path(__file__).resolve().parent
+DECODER_PATH = ROOT / "decoders" / "mcp_privprof_decoders.xml"
 RULES_PATH = ROOT / "rules" / "mcp_privprof_rules.xml"
 FIXTURES_ROOT = ROOT / "fixtures"
 MANIFEST_PATH = FIXTURES_ROOT / "manifest.json"
 EVENT_SCHEMA_PATH = ROOT.parent / "schemas" / "event-v1.schema.json"
+WAZUH_DECODER_TARGET = "/var/ossec/etc/decoders/mcp_privprof_decoders.xml"
 WAZUH_RULES_TARGET = "/var/ossec/etc/rules/mcp_privprof_rules.xml"
 EXPECTED_IMAGE = "wazuh/wazuh-manager:4.14.6"
 EXPECTED_VERSION = "v4.14.6"
+EXPECTED_DECODER = "mcp_privprof"
+LOG_PREFIX = "mcp_privprof: "
 SOURCE_FIELD = "@source"
 
 type JsonObject = dict[str, object]
@@ -83,6 +89,7 @@ class DetectionPack:
     """Parsed and validated rule and fixture inputs."""
 
     image: str
+    decoder_name: str
     source_label: str
     rules: dict[int, RuleSpec]
     cases: tuple[FixtureCase, ...]
@@ -90,6 +97,7 @@ class DetectionPack:
 
 def load_detection_pack() -> DetectionPack:
     """Parse rules and manifest, then enforce the static pack contract."""
+    decoder_name = _load_decoder_name()
     rules = _load_rules()
     manifest = _load_json_object(MANIFEST_PATH)
     if _required_str(manifest, "schema_version") != "1.0":
@@ -97,6 +105,9 @@ def load_detection_pack() -> DetectionPack:
     image = _required_str(manifest, "wazuh_image")
     if image != EXPECTED_IMAGE:
         raise ValueError(f"Wazuh fixture image must be pinned to {EXPECTED_IMAGE}")
+    manifest_decoder = _required_str(manifest, "wazuh_decoder")
+    if manifest_decoder != decoder_name:
+        raise ValueError(f"fixture manifest decoder must be {decoder_name}")
     source_label = _required_str(manifest, "event_source_label")
     if source_label != "mcp_privprof":
         raise ValueError("event_source_label must be mcp_privprof")
@@ -108,6 +119,7 @@ def load_detection_pack() -> DetectionPack:
     _validate_manifest_coverage(rules, cases)
     return DetectionPack(
         image=image,
+        decoder_name=decoder_name,
         source_label=source_label,
         rules=rules,
         cases=cases,
@@ -185,46 +197,56 @@ def run_wazuh_logtest(pack: DetectionPack) -> None:
         raise RuntimeError(
             f"{pack.image} is not present locally; pull it explicitly before logtest"
         )
-    version = _docker_logtest(docker, pack.image, ("-V",), input_text="")
-    if EXPECTED_VERSION not in version:
-        raise RuntimeError(f"expected {EXPECTED_VERSION}, got: {version.strip()}")
+    container_name = f"mcp-privprof-wazuh-logtest-{os.getpid()}"
+    started = False
+    try:
+        _start_logtest_container(docker, pack.image, container_name)
+        started = True
+        _wait_for_analysisd(docker, container_name)
+        version = _container_logtest(docker, container_name, ("-V",), input_text="")
+        if EXPECTED_VERSION not in version:
+            raise RuntimeError(f"expected {EXPECTED_VERSION}, got: {version.strip()}")
 
-    for case in pack.cases:
-        events = load_fixture_events(case.fixture)
-        input_text = "\n".join(
-            json.dumps(
-                _with_source_label(event, pack.source_label),
-                ensure_ascii=False,
-                separators=(",", ":"),
-                sort_keys=True,
-            )
-            for event in events
-        )
-        input_text += "\n"
-        if len(events) == 1:
-            _docker_logtest(
-                docker,
-                pack.image,
-                (
-                    "-q",
-                    "-U",
-                    f"{case.expected_rule_id}:{case.expected_level}:json",
-                ),
-                input_text=input_text,
-            )
-        else:
-            output = _docker_logtest(
-                docker,
-                pack.image,
-                ("-v",),
-                input_text=input_text,
-            )
-            matched_ids = re.findall(r"^\s+id: '([0-9]+)'$", output, flags=re.MULTILINE)
-            if not matched_ids or int(matched_ids[-1]) != case.expected_rule_id:
-                raise AssertionError(
-                    f"{case.case_id} expected final rule {case.expected_rule_id}; "
-                    f"observed {matched_ids or 'no rule IDs'}"
+        for case in pack.cases:
+            events = load_fixture_events(case.fixture)
+            input_text = "\n".join(
+                LOG_PREFIX
+                + json.dumps(
+                    _with_source_label(event, pack.source_label),
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                    sort_keys=True,
                 )
+                for event in events
+            )
+            input_text += "\n"
+            if len(events) == 1:
+                _container_logtest(
+                    docker,
+                    container_name,
+                    (
+                        "-q",
+                        "-U",
+                        f"{case.expected_rule_id}:{case.expected_level}:{pack.decoder_name}",
+                    ),
+                    input_text=input_text,
+                )
+            else:
+                output = _container_logtest(
+                    docker,
+                    container_name,
+                    ("-v",),
+                    input_text=input_text,
+                )
+                matched_ids = re.findall(r"^\s+id: '([0-9]+)'$", output, flags=re.MULTILINE)
+                if not matched_ids or int(matched_ids[-1]) != case.expected_rule_id:
+                    raise AssertionError(
+                        f"{case.case_id} expected final rule {case.expected_rule_id}; "
+                        f"observed {matched_ids or 'no rule IDs'}"
+                    )
+    finally:
+        if started:
+            _remove_logtest_container(docker, container_name)
 
 
 def _load_rules() -> dict[int, RuleSpec]:
@@ -291,11 +313,40 @@ def _load_rules() -> dict[int, RuleSpec]:
 
     if 100000 not in rules:
         raise ValueError("Wazuh pack is missing its event-v1 grouping rule")
+    if root.find("rule[@id='100000']/decoded_as") is None:
+        raise ValueError("Wazuh grouping rule must declare decoded_as")
+    if root.findtext("rule[@id='100000']/decoded_as") != EXPECTED_DECODER:
+        raise ValueError(f"Wazuh grouping rule must use decoder {EXPECTED_DECODER}")
     for rule in rules.values():
         for reference in (rule.parent_id, rule.matched_parent_id):
             if reference is not None and reference not in rules:
                 raise ValueError(f"rule {rule.rule_id} references missing rule {reference}")
     return rules
+
+
+def _load_decoder_name() -> str:
+    try:
+        root = ET.parse(DECODER_PATH).getroot()
+    except ET.ParseError as exc:
+        raise ValueError(f"{DECODER_PATH} is not well-formed XML") from exc
+    name = root.attrib.get("name")
+    if root.tag != "decoder" or name != EXPECTED_DECODER:
+        raise ValueError(f"Wazuh decoder must be named {EXPECTED_DECODER}")
+    prematch = root.find("prematch")
+    if (
+        prematch is None
+        or prematch.attrib.get("type") != "pcre2"
+        or prematch.text != r"^mcp_privprof:\s*"
+    ):
+        raise ValueError("Wazuh decoder must require the exact project transport prefix")
+    plugin = root.find("plugin_decoder")
+    if (
+        plugin is None
+        or plugin.attrib.get("offset") != "after_prematch"
+        or plugin.text != "JSON_Decoder"
+    ):
+        raise ValueError("Wazuh decoder must parse JSON after the project prefix")
+    return name
 
 
 def _parse_case(value: object) -> FixtureCase:
@@ -397,26 +448,121 @@ def _with_source_label(event: JsonObject, source_label: str) -> JsonObject:
     return enriched
 
 
-def _docker_logtest(
+def _start_logtest_container(docker: str, image: str, container_name: str) -> None:
+    existing = subprocess.run(
+        [
+            docker,
+            "ps",
+            "-a",
+            "--filter",
+            f"name=^/{container_name}$",
+            "--format",
+            "{{.Names}}",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+    if existing.returncode != 0:
+        raise RuntimeError(f"could not inspect Docker containers: {existing.stderr.strip()}")
+    if existing.stdout.strip():
+        raise RuntimeError(f"refusing to reuse existing container {container_name}")
+
+    decoder_mount = f"type=bind,src={DECODER_PATH.resolve()},dst={WAZUH_DECODER_TARGET},readonly"
+    rules_mount = f"type=bind,src={RULES_PATH.resolve()},dst={WAZUH_RULES_TARGET},readonly"
+    started = subprocess.run(
+        [
+            docker,
+            "run",
+            "-d",
+            "--name",
+            container_name,
+            "--pull=never",
+            "--network=none",
+            "--label",
+            "org.mcp-privprof.role=wazuh-logtest",
+            "--mount",
+            decoder_mount,
+            "--mount",
+            rules_mount,
+            image,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
+    )
+    if started.returncode != 0:
+        raise RuntimeError(f"could not start temporary Wazuh manager: {started.stderr.strip()}")
+
+
+def _wait_for_analysisd(docker: str, container_name: str) -> None:
+    deadline = time.monotonic() + 90
+    while time.monotonic() < deadline:
+        status = subprocess.run(
+            [docker, "exec", container_name, "/var/ossec/bin/wazuh-control", "status"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=30,
+        )
+        if "wazuh-analysisd is running" in status.stdout:
+            return
+        state = subprocess.run(
+            [docker, "inspect", "--format", "{{.State.Status}}", container_name],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=30,
+        )
+        if state.returncode != 0 or state.stdout.strip() != "running":
+            logs = _container_logs(docker, container_name)
+            raise RuntimeError(f"temporary Wazuh manager stopped before readiness:\n{logs}")
+        time.sleep(1)
+    logs = _container_logs(docker, container_name)
+    raise TimeoutError(f"wazuh-analysisd did not become ready within 90 seconds:\n{logs}")
+
+
+def _container_logs(docker: str, container_name: str) -> str:
+    completed = subprocess.run(
+        [docker, "logs", "--tail", "100", container_name],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+    return completed.stdout + completed.stderr
+
+
+def _remove_logtest_container(docker: str, container_name: str) -> None:
+    removed = subprocess.run(
+        [docker, "rm", "-f", container_name],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+    if removed.returncode != 0 and "No such container" not in removed.stderr:
+        raise RuntimeError(
+            f"could not remove temporary Wazuh manager {container_name}: {removed.stderr.strip()}"
+        )
+
+
+def _container_logtest(
     docker: str,
-    image: str,
+    container_name: str,
     arguments: tuple[str, ...],
     *,
     input_text: str,
 ) -> str:
-    mount = f"type=bind,src={RULES_PATH.resolve()},dst={WAZUH_RULES_TARGET},readonly"
     completed = subprocess.run(
         [
             docker,
-            "run",
-            "--rm",
+            "exec",
             "-i",
-            "--pull=never",
-            "--entrypoint",
+            container_name,
             "/var/ossec/bin/wazuh-logtest",
-            "--mount",
-            mount,
-            image,
             *arguments,
         ],
         input=input_text,

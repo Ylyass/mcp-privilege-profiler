@@ -1,0 +1,11 @@
+<!--
+  MCP Privilege Profiler Wazuh decoder
+  SPDX-License-Identifier: Apache-2.0
+
+  The transport prefix prevents Wazuh's generic JSON decoder and broad
+  application grouping rules from claiming these records first.
+-->
+<decoder name="mcp_privprof">
+  <prematch type="pcre2">^mcp_privprof:\s*</prematch>
+  <plugin_decoder offset="after_prematch">JSON_Decoder</plugin_decoder>
+</decoder>

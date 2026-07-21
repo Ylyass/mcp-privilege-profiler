@@ -11,3 +11,4 @@ consequences. Decisions are changed by a superseding ADR, not silently edited.
 - [0006: Reviewed constraints and exact enforcement](0006-reviewed-constraints-and-exact-enforcement.md)
 - [0007: Reviewed limits, mandatory audit, and single-use permits](0007-limits-audit-and-single-use-permits.md)
 - [0008: Pinned Wazuh JSONL bridge and fixture-tested rules](0008-pinned-wazuh-jsonl-bridge.md)
+- [0009: Prefixed Wazuh transport and dedicated JSON decoder](0009-prefixed-wazuh-decoder.md)

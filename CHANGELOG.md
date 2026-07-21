@@ -63,3 +63,9 @@ All notable changes are documented here.
   ingestion and verified official source hashes.
 - Added 11 custom Wazuh alert rules, 22 positive/near-miss fixture cases,
   static contract validation, and an opt-in pinned `wazuh-logtest` runner.
+- Added collision-safe prefixed Wazuh transport and a dedicated decoder after
+  real-engine testing exposed built-in Suricata rule precedence over generic
+  JSON, then passed all 22 cases against Wazuh 4.14.6.
+- Added a bounded live probe and verified a real MCP proxy denial reached the
+  active Wazuh lab agent, manager rule `100103`, and the green single-node
+  indexer under the same trace ID.

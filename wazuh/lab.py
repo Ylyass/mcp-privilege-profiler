@@ -31,6 +31,7 @@ OFFICIAL_FILE_HASHES = {
 }
 AGENT_CONFIG_PATH = RUNTIME_ROOT / "agent-ossec.conf"
 EVENTS_PATH = REPOSITORY_ROOT / ".mcp-privprof" / "events.jsonl"
+DECODER_PATH = REPOSITORY_ROOT / "wazuh" / "decoders" / "mcp_privprof_decoders.xml"
 RULES_PATH = REPOSITORY_ROOT / "wazuh" / "rules" / "mcp_privprof_rules.xml"
 LOCALFILE_SNIPPET_PATH = REPOSITORY_ROOT / "wazuh" / "config" / "agent-localfile.xml"
 OVERRIDE_PATH = REPOSITORY_ROOT / "wazuh" / "compose.override.yml"
@@ -225,6 +226,7 @@ def _compose_environment() -> dict[str, str]:
     environment = dict(os.environ)
     environment.update(
         {
+            "MCP_PRIVPROF_DECODER_PATH": str(DECODER_PATH.resolve()),
             "MCP_PRIVPROF_RULES_PATH": str(RULES_PATH.resolve()),
             "MCP_PRIVPROF_AGENT_CONFIG_PATH": str(AGENT_CONFIG_PATH.resolve()),
             "MCP_PRIVPROF_EVENTS_PATH": str(EVENTS_PATH.resolve()),

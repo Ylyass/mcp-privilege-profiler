@@ -14,7 +14,7 @@ order so later security decisions are built on verified lower layers.
 | 6. Profiling and human review | Verified | Launch-bound scenarios, privacy-safe evidence, exact review gate, and policy artifacts work |
 | 7. Enforcement and catalog minimization | Verified | Reviewed policy, filtered catalog, exact constraints, stable errors, and fail-closed drift work |
 | 8. Limits, audit, and permits | Verified | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
-| 9. Wazuh bridge | In progress | Static pack and local lab are verified; real Wazuh analysis and live JSONL ingestion require Docker Desktop and WSL 2 |
+| 9. Wazuh bridge | Verified | Static validation, 22 real logtest cases, and live proxy-to-agent-to-manager-to-indexer delivery pass |
 | 10. Benchmark and complete test matrix | Not started | Reproducible measured security and performance evidence |
 | 11. Documentation, external review, release | Not started | Clean-clone reviews and open-source release artifacts |
 
@@ -27,8 +27,9 @@ execution, and raw argument/result values remain absent from JSONL and SQLite.
 
 Stage 9 now has a pinned Wazuh 4.14.6 local-only deployment overlay, a
 read-only JSONL agent input, 11 custom alert rules, 22 positive/near-miss
-fixtures, and automated static contract validation. The helper also automates
-real `wazuh-logtest` execution and the full local lab, but those two runtime
-checks have not run on this computer because Docker Desktop and WSL 2 are not
-installed. Stage 9 closes only after the real analysis engine and live
-agent-to-manager path both pass.
+fixtures, automated static contract validation, and a collision-safe prefixed
+JSON decoder. All 22 fixture cases now pass the real Wazuh 4.14.6 analysis
+engine. The bounded live probe also proved that a real proxy denial was
+collected by Wazuh agent `001`, became rule `100103` at level 10, and was
+searchable in the green single-node indexer under the same trace ID. This
+closes Stage 9; Stage 10 is the next implementation stage.

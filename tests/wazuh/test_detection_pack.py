@@ -34,10 +34,27 @@ def test_agent_ingestion_is_json_only_future_and_source_labeled() -> None:
     assert localfile.findtext("location") == "/var/log/mcp-privprof/events.jsonl"
     assert localfile.findtext("log_format") == "json"
     assert localfile.findtext("only-future-events") == "yes"
+    assert localfile.findtext("out_format") == "mcp_privprof: $(log)"
     label = localfile.find("label")
     assert label is not None
     assert label.attrib == {"key": "@source"}
     assert label.text == "mcp_privprof"
+
+
+def test_custom_decoder_claims_only_prefixed_project_json() -> None:
+    """The dedicated decoder must avoid collisions with generic JSON rules."""
+    decoder = ET.parse(ROOT / "wazuh" / "decoders" / "mcp_privprof_decoders.xml").getroot()
+
+    assert decoder.tag == "decoder"
+    assert decoder.attrib == {"name": "mcp_privprof"}
+    prematch = decoder.find("prematch")
+    assert prematch is not None
+    assert prematch.attrib == {"type": "pcre2"}
+    assert prematch.text == r"^mcp_privprof:\s*"
+    plugin = decoder.find("plugin_decoder")
+    assert plugin is not None
+    assert plugin.attrib == {"offset": "after_prematch"}
+    assert plugin.text == "JSON_Decoder"
 
 
 def test_compose_overlay_is_local_only_pinned_and_read_only() -> None:
@@ -45,6 +62,8 @@ def test_compose_overlay_is_local_only_pinned_and_read_only() -> None:
     compose = (ROOT / "wazuh" / "compose.override.yml").read_text(encoding="utf-8")
 
     assert "wazuh/wazuh-agent:4.14.6" in compose
+    assert "MCP_PRIVPROF_DECODER_PATH" in compose
+    assert "/var/ossec/etc/decoders/mcp_privprof_decoders.xml" in compose
     assert compose.count("127.0.0.1:") == 4
     assert "0.0.0.0:" not in compose
     assert "read_only: true" in compose

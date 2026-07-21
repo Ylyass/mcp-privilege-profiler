@@ -184,5 +184,7 @@ receive loop while leaving no interval where changed definitions are trusted.
 Policy enforcement, catalog minimization, and reviewed path/URL/enum/byte
 constraints, limits, mandatory pre-forward audit, and approval permits are
 active. The Stage 9 Wazuh rules, fixtures, and pinned local lab definition now
-exist and pass static validation. Real `wazuh-logtest` execution and live
-agent-to-manager event delivery remain the Stage 9 exit boundary.
+exist and pass static validation. All 22 cases also pass real Wazuh 4.14.6
+`wazuh-logtest`. A bounded live probe proved one real proxy denial traveled
+through Wazuh agent `001`, matched manager rule `100103` at level 10, and was
+searchable in the green single-node indexer under the same trace ID.

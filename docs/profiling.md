@@ -141,4 +141,5 @@ This stage recommends candidates and generates a reviewed policy artifact.
 Stages 7 and 8 now enforce effects, exact argument constraints, limits,
 mandatory audit JSONL, and single-use approval permits. Stage 9 now includes
 the static Wazuh detection pack and local lab definition; real Wazuh analysis
-and live ingestion remain its exit checks.
+passes all 22 fixture cases, and the bounded live ingestion probe passes from
+proxy through Wazuh agent, manager rule, and indexer.
