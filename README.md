@@ -61,6 +61,7 @@ the first hosted run, clean-clone testing, external review, and release
 publication remain.
 See the [benchmark guide](docs/benchmark.md),
 [Wazuh bridge guide](docs/wazuh-bridge.md), and
+[competitive landscape](docs/competitive-landscape.md),
 [release process](docs/release-process.md), and
 [roadmap](docs/roadmap.md) for the verified boundary.
 

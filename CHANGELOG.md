@@ -13,6 +13,8 @@ All notable changes are documented here.
   additional hook repositories.
 - Added a cross-platform pytest launcher that avoids shared user temp roots
   while preserving tests that require the real operating-system temp boundary.
+- Added a dated, primary-source competitive analysis that records substantial
+  vendor overlap and narrows public positioning to the verified workflow.
 - Established the pre-alpha repository, reproducible Python baseline, initial
   default-deny policy domain, and versioned policy/event contracts.
 - Added a deterministic local MCP lab whose credential, command, and network
