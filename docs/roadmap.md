@@ -15,7 +15,7 @@ order so later security decisions are built on verified lower layers.
 | 7. Enforcement and catalog minimization | Verified | Reviewed policy, filtered catalog, exact constraints, stable errors, and fail-closed drift work |
 | 8. Limits, audit, and permits | Verified | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
 | 9. Wazuh bridge | Verified | Static validation, 22 real logtest cases, and live proxy-to-agent-to-manager-to-indexer delivery pass |
-| 10. Benchmark and complete test matrix | Verified | 75 deterministic security cases, raw schema-valid results, p50/p95/p99 measurements, and 158 passing tests |
+| 10. Benchmark and complete test matrix | Verified | 75 deterministic security cases, raw schema-valid results, p50/p95/p99 measurements, and 159 passing tests |
 | 11. Documentation, external review, release | Not started | Clean-clone reviews and open-source release artifacts |
 
 Stage 8 enforce mode keeps the Stage 7 exact catalog and constraint gates, then
