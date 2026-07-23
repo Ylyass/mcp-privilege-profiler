@@ -1,0 +1,74 @@
+name: Bug report
+description: Report reproducible incorrect behavior without including secrets.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve the project. For a security vulnerability,
+        stop here and follow SECURITY.md instead of creating a public issue.
+  - type: input
+    id: revision
+    attributes:
+      label: Version or commit
+      description: Provide the release version or exact Git commit.
+      placeholder: v0.1.0 or 0123456789abcdef
+    validations:
+      required: true
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - Windows
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Inventory and fingerprints
+        - Profiling and review
+        - Policy enforcement
+        - Limits, audit, or permits
+        - Wazuh bridge
+        - Benchmark
+        - Documentation or packaging
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: List exact, safe steps and commands. Replace secrets and personal paths.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the exact error, with sensitive data removed.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I removed credentials, tokens, raw sensitive arguments, and personal data.
+          required: true
+        - label: This is not a vulnerability report.
+          required: true

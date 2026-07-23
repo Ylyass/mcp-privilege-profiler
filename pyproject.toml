@@ -58,7 +58,7 @@ line-length = 100
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.pyright]
-include = ["src", "lab", "tests", "wazuh", "benchmarks"]
+include = ["src", "lab", "tests", "wazuh", "benchmarks", "scripts"]
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
 venv = ".venv"

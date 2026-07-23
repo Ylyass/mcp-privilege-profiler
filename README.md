@@ -55,9 +55,13 @@ The current verified build includes:
   with 30 legitimate, 30 forbidden, 10 drift, and 5 overuse/approval-abuse
   cases, plus p50/p95/p99 measurements and raw machine-readable evidence.
 
-Hosted CI, clean-clone testing, external review, and release publication remain.
+Hosted CI is now defined with minimal permissions and full-SHA action pins, but
+it has not run because no public GitHub remote is configured. Name clearance,
+the first hosted run, clean-clone testing, external review, and release
+publication remain.
 See the [benchmark guide](docs/benchmark.md),
 [Wazuh bridge guide](docs/wazuh-bridge.md), and
+[release process](docs/release-process.md), and
 [roadmap](docs/roadmap.md) for the verified boundary.
 
 ## Current commands

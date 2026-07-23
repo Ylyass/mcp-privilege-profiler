@@ -10,6 +10,7 @@ actual supported security boundary, not future intentions.
 - [Inventory and drift](inventory.md)
 - [Master build and publication plan](master-build-plan.md)
 - [Profiling and human review](profiling.md)
+- [Release and open-source publication](release-process.md)
 - [Implementation roadmap](roadmap.md)
 - [Threat model](threat-model.md)
 - [Technology baseline](technology-baseline.md)

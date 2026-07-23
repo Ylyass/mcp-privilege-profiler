@@ -1,0 +1,42 @@
+name: Feature request
+description: Propose a narrowly scoped capability or security improvement.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user or security problem, not only the proposed feature.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Explain the smallest change that would solve the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security-boundary impact
+      description: Explain new trust, permissions, data, transports, or fail-open risks.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope checks
+      options:
+        - label: I reviewed the documented v0.1 limitations and roadmap.
+          required: true
+        - label: This proposal does not require real destructive test payloads.
+          required: true

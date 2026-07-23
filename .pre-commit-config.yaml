@@ -1,0 +1,86 @@
+minimum_pre_commit_version: "4.6.0"
+default_install_hook_types:
+  - pre-commit
+  - pre-push
+
+repos:
+  - repo: local
+    hooks:
+      - id: staged-whitespace
+        name: Reject staged whitespace errors
+        entry: git
+        args:
+          - diff
+          - --check
+          - --cached
+        language: system
+        pass_filenames: false
+
+      - id: ruff-check
+        name: Ruff lint
+        entry: uv
+        args:
+          - run
+          - --frozen
+          - --no-sync
+          - ruff
+          - check
+          - .
+        language: system
+        pass_filenames: false
+
+      - id: ruff-format
+        name: Ruff format check
+        entry: uv
+        args:
+          - run
+          - --frozen
+          - --no-sync
+          - ruff
+          - format
+          - --check
+          - .
+        language: system
+        pass_filenames: false
+
+      - id: pyright
+        name: Strict Pyright
+        entry: uv
+        args:
+          - run
+          - --frozen
+          - --no-sync
+          - pyright
+        language: system
+        pass_filenames: false
+        stages:
+          - pre-push
+
+      - id: pytest
+        name: Full pytest suite
+        entry: uv
+        args:
+          - run
+          - --frozen
+          - --no-sync
+          - python
+          - scripts/run_pytest.py
+        language: system
+        pass_filenames: false
+        stages:
+          - pre-push
+
+      - id: wazuh-contracts
+        name: Wazuh fixture contracts
+        entry: uv
+        args:
+          - run
+          - --frozen
+          - --no-sync
+          - python
+          - -m
+          - wazuh.verify
+        language: system
+        pass_filenames: false
+        stages:
+          - pre-push

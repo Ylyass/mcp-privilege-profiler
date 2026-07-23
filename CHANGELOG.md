@@ -4,6 +4,15 @@ All notable changes are documented here.
 
 ## Unreleased
 
+- Added a minimal-permission, full-SHA-pinned GitHub Actions workflow covering
+  Linux and Windows on Python 3.13 and 3.14, deterministic benchmark
+  verification, and distribution smoke tests.
+- Added Dependabot configuration, structured issue forms, a security-aware
+  pull-request template, and an explicit pre-release publication process.
+- Added repository-owned pre-commit and pre-push gates without downloading
+  additional hook repositories.
+- Added a cross-platform pytest launcher that avoids shared user temp roots
+  while preserving tests that require the real operating-system temp boundary.
 - Established the pre-alpha repository, reproducible Python baseline, initial
   default-deny policy domain, and versioned policy/event contracts.
 - Added a deterministic local MCP lab whose credential, command, and network
