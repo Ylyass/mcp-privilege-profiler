@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -30,6 +31,7 @@ SERVER_ID = "wazuh-live-probe-lab"
 EXPECTED_RULE_ID = "100103"
 EXPECTED_LEVEL = 10
 MANAGER_SERVICE = "wazuh.manager"
+LAB_AGENT_NAME = "mcp-privprof-lab"
 ALERT_PATH = "/var/ossec/logs/alerts/alerts.json"
 
 type JsonScalar = bool | int | float | str | None
@@ -92,7 +94,7 @@ async def run_live_probe(*, timeout_seconds: float = 30.0) -> LiveProbeResult:
     docker = _require_executable("docker")
     cli = _require_cli()
     manager = _running_manager(docker)
-    _require_active_lab_agent(docker, manager)
+    agent_id = _require_active_lab_agent(docker, manager)
     lab.prepare_runtime_files()
 
     task_id = f"wazuh-live-{uuid4()}"
@@ -113,6 +115,7 @@ async def run_live_probe(*, timeout_seconds: float = 30.0) -> LiveProbeResult:
         docker=docker,
         manager=manager,
         trace_id=event.trace_id,
+        expected_agent_id=agent_id,
         timeout_seconds=timeout_seconds,
     )
     return LiveProbeResult(
@@ -214,6 +217,7 @@ async def _wait_for_alert(
     docker: str,
     manager: str,
     trace_id: str,
+    expected_agent_id: str,
     timeout_seconds: float,
 ) -> ObservedAlert:
     deadline = monotonic() + timeout_seconds
@@ -223,8 +227,8 @@ async def _wait_for_alert(
                 alert.trace_id == trace_id
                 and alert.rule_id == EXPECTED_RULE_ID
                 and alert.rule_level == EXPECTED_LEVEL
-                and alert.agent_id == "001"
-                and alert.agent_name == "mcp-privprof-lab"
+                and alert.agent_id == expected_agent_id
+                and alert.agent_name == LAB_AGENT_NAME
             ):
                 return alert
         await anyio.sleep(1)
@@ -306,7 +310,7 @@ def _running_manager(docker: str) -> str:
     return manager_ids[0]
 
 
-def _require_active_lab_agent(docker: str, manager: str) -> None:
+def _require_active_lab_agent(docker: str, manager: str) -> str:
     completed = subprocess.run(
         (docker, "exec", manager, "/var/ossec/bin/agent_control", "-lc"),
         capture_output=True,
@@ -314,10 +318,18 @@ def _require_active_lab_agent(docker: str, manager: str) -> None:
         check=False,
         timeout=10,
     )
-    if completed.returncode != 0 or "001, Name: mcp-privprof-lab, IP: any, Active" not in (
-        completed.stdout
-    ):
+    if completed.returncode != 0:
         raise RuntimeError("the isolated mcp-privprof-lab Wazuh agent is not active")
+    return parse_active_lab_agent_id(completed.stdout)
+
+
+def parse_active_lab_agent_id(agent_control_output: str) -> str:
+    """Return the manager-assigned ID for the one active named lab agent."""
+    pattern = rf"^\s*ID:\s*(\d+), Name:\s*{re.escape(LAB_AGENT_NAME)}, IP:\s*any, Active\s*$"
+    matches = re.findall(pattern, agent_control_output, flags=re.MULTILINE)
+    if len(matches) != 1:
+        raise RuntimeError("the isolated mcp-privprof-lab Wazuh agent is not active exactly once")
+    return matches[0]
 
 
 def _require_executable(name: str) -> str:

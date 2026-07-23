@@ -61,8 +61,9 @@ current deterministic lab.
    Wazuh 4.14.6 manager and asserts the final rule, level, and decoder.
 5. **Passed:** the bounded live probe made an official MCP client request a
    harmless simulated credential tool through the real proxy. The proxy denied
-   it, agent `001` delivered the event, manager rule `100103` fired at level 10,
-   and the same trace became searchable in the green single-node indexer.
+   it, the active `mcp-privprof-lab` agent delivered the event, manager rule
+   `100103` fired at level 10, and the same trace became searchable in the green
+   single-node indexer.
 6. **Later optional demonstration:** introduce a real MCP host and a dedicated
    test account only after the security layers pass.
 
@@ -198,7 +199,8 @@ The probe creates a temporary synthetic all-deny policy solely to isolate this
 bridge test. It uses the official MCP client, the real enforcement proxy, and
 the harmless local MCP server. It intentionally requests the hidden
 `simulated_credential_read` tool, verifies that the request was not forwarded,
-and waits for the exact trace to reach rule `100103` from test agent `001`.
+discovers the current manager-assigned ID for the active `mcp-privprof-lab`
+agent, and waits for the exact trace to reach rule `100103` from that identity.
 Temporary policy and enforcement-state files use the operating-system temporary
 directory; the privacy-minimized event remains in the configured JSONL audit.
 

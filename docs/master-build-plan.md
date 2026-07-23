@@ -930,7 +930,7 @@ Exit gate:
 
 Verified on 2026-07-22: all 22 positive/near-miss cases passed the pinned real
 analysis engine, and a harmless live credential-access attempt was denied by
-the proxy, delivered by Wazuh agent `001`, matched rule `100103` at level 10,
+the proxy, delivered by the active named Wazuh lab agent, matched rule `100103` at level 10,
 and became searchable in the green single-node indexer under the same trace.
 
 ### Phase 10 — Tests, benchmark, and performance, 10 hours

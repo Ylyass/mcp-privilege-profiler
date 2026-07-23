@@ -30,6 +30,6 @@ read-only JSONL agent input, 11 custom alert rules, 22 positive/near-miss
 fixtures, automated static contract validation, and a collision-safe prefixed
 JSON decoder. All 22 fixture cases now pass the real Wazuh 4.14.6 analysis
 engine. The bounded live probe also proved that a real proxy denial was
-collected by Wazuh agent `001`, became rule `100103` at level 10, and was
-searchable in the green single-node indexer under the same trace ID. This
+collected by the active `mcp-privprof-lab` Wazuh agent, became rule `100103` at
+level 10, and was searchable in the green single-node indexer under the same trace ID. This
 closes Stage 9; Stage 10 is the next implementation stage.

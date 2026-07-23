@@ -40,7 +40,7 @@ built-in Suricata rule 86600. After this change, Wazuh 4.14.6 passed all 22
 positive and near-miss fixture cases with decoder `mcp_privprof`.
 
 The bounded live probe then produced a real enforcement denial, which Wazuh
-agent `001` delivered to manager rule `100103` at level 10 and the green
+agent `mcp-privprof-lab` delivered to manager rule `100103` at level 10 and the green
 single-node indexer stored under the same trace ID.
 
 ## Consequences

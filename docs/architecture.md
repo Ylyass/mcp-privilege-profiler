@@ -186,5 +186,5 @@ constraints, limits, mandatory pre-forward audit, and approval permits are
 active. The Stage 9 Wazuh rules, fixtures, and pinned local lab definition now
 exist and pass static validation. All 22 cases also pass real Wazuh 4.14.6
 `wazuh-logtest`. A bounded live probe proved one real proxy denial traveled
-through Wazuh agent `001`, matched manager rule `100103` at level 10, and was
-searchable in the green single-node indexer under the same trace ID.
+through the active named Wazuh lab agent, matched manager rule `100103` at
+level 10, and was searchable in the green single-node indexer under the same trace ID.

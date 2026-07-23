@@ -67,5 +67,6 @@ All notable changes are documented here.
   real-engine testing exposed built-in Suricata rule precedence over generic
   JSON, then passed all 22 cases against Wazuh 4.14.6.
 - Added a bounded live probe and verified a real MCP proxy denial reached the
-  active Wazuh lab agent, manager rule `100103`, and the green single-node
-  indexer under the same trace ID.
+  active named Wazuh lab agent, manager rule `100103`, and the green single-node
+  indexer under the same trace ID. The probe discovers the manager-assigned
+  agent ID because registration IDs may change when the lab is recreated.
