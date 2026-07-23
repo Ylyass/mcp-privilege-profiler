@@ -15,6 +15,8 @@ All notable changes are documented here.
   while preserving tests that require the real operating-system temp boundary.
 - Added a dated, primary-source competitive analysis that records substantial
   vendor overlap and narrows public positioning to the verified workflow.
+- Recorded dated, exact GitHub, PyPI, and npm namespace checks while retaining
+  the provisional-name warning until broader clearance is complete.
 - Established the pre-alpha repository, reproducible Python baseline, initial
   default-deny policy domain, and versioned policy/event contracts.
 - Added a deterministic local MCP lab whose credential, command, and network

@@ -5,7 +5,7 @@ order so later security decisions are built on verified lower layers.
 
 | Stage | Current status | Verified result or exit dependency |
 |---|---|---|
-| 0. Correctness and provisional name | Partial | Stable MCP v1 baseline chosen; final publication name clearance remains |
+| 0. Correctness and provisional name | Partial | Stable MCP v1 baseline and exact GitHub/PyPI/npm namespace checks verified; trademark, confusion, domain, and final rechecks remain |
 | 1. Repository and quality foundation | Local foundation verified; CI defined | Locked environment and local gates work; first hosted run remains |
 | 2. Threat model, contracts, and core domain | Foundation verified | Default-deny policy and privacy event contracts exist; profile state was added in Stage 6 |
 | 3. Safe MCP lab | Verified | Deterministic tools and harmless compromised-agent scenarios |

@@ -17,7 +17,8 @@ Completed locally:
 
 Still required:
 
-1. finish repository, package, domain, and relevant trademark name checks;
+1. finish trademark, confusion, domain, and final repository/package name
+   checks described in the provisional name-clearance record;
 2. configure a private vulnerability-reporting channel;
 3. push the repository and pass the first hosted CI run;
 4. enable branch protection, dependency graph, Dependabot, secret scanning,
