@@ -18,7 +18,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Protocol, cast
+from typing import Protocol, TextIO, cast
 
 import anyio
 import mcp.types as types
@@ -298,20 +298,27 @@ async def _run_direct_server(scenarios: tuple[CallScenario, ...]) -> DirectRun:
         env=_quiet_subprocess_environment(),
     )
     started = time.perf_counter_ns()
-    async with (
-        stdio_client(parameters) as streams,
-        ClientSession(*streams) as session,
-    ):
-        await session.initialize()
-        catalog = await collect_catalog(session, "benchmark-lab")
-        startup_inventory_ms = (time.perf_counter_ns() - started) / 1_000_000
-        durations: list[int] = []
-        for scenario in scenarios:
-            call_started = time.perf_counter_ns()
-            result = await session.call_tool(scenario.tool_name, scenario.arguments)
-            durations.append(time.perf_counter_ns() - call_started)
-            if result.isError is True:
-                raise AssertionError(f"direct legitimate call failed: {scenario.case_id}")
+    with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as errlog:
+        captured_errlog = cast(TextIO, errlog)
+        try:
+            async with (
+                stdio_client(parameters, errlog=captured_errlog) as streams,
+                ClientSession(*streams) as session,
+            ):
+                await session.initialize()
+                catalog = await collect_catalog(session, "benchmark-lab")
+                startup_inventory_ms = (time.perf_counter_ns() - started) / 1_000_000
+                durations: list[int] = []
+                for scenario in scenarios:
+                    call_started = time.perf_counter_ns()
+                    result = await session.call_tool(scenario.tool_name, scenario.arguments)
+                    durations.append(time.perf_counter_ns() - call_started)
+                    if result.isError is True:
+                        raise AssertionError(f"direct legitimate call failed: {scenario.case_id}")
+        except Exception as exc:
+            raise RuntimeError(
+                f"direct MCP benchmark failed; bounded stderr:\n{_stderr_tail(captured_errlog)}"
+            ) from exc
     return DirectRun(
         catalog=catalog,
         startup_inventory_ms=startup_inventory_ms,
@@ -366,26 +373,33 @@ async def _run_enforced_proxy(
     )
     cases: list[JsonObject] = []
     durations: list[int] = []
-    async with (
-        stdio_client(parameters) as streams,
-        ClientSession(*streams) as session,
-    ):
-        await session.initialize()
-        listed = await session.list_tools()
-        exposed_tools = len(listed.tools)
-        for scenario in scenarios:
-            started = time.perf_counter_ns()
-            result = await session.call_tool(scenario.tool_name, scenario.arguments)
-            durations.append(time.perf_counter_ns() - started)
-            observed = "denied" if result.isError is True else "allowed"
-            cases.append(
-                {
-                    "case_id": scenario.case_id,
-                    "category": scenario.category,
-                    "passed": observed == scenario.expected_decision,
-                    "observed": observed,
-                }
-            )
+    with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as errlog:
+        captured_errlog = cast(TextIO, errlog)
+        try:
+            async with (
+                stdio_client(parameters, errlog=captured_errlog) as streams,
+                ClientSession(*streams) as session,
+            ):
+                await session.initialize()
+                listed = await session.list_tools()
+                exposed_tools = len(listed.tools)
+                for scenario in scenarios:
+                    started = time.perf_counter_ns()
+                    result = await session.call_tool(scenario.tool_name, scenario.arguments)
+                    durations.append(time.perf_counter_ns() - started)
+                    observed = "denied" if result.isError is True else "allowed"
+                    cases.append(
+                        {
+                            "case_id": scenario.case_id,
+                            "category": scenario.category,
+                            "passed": observed == scenario.expected_decision,
+                            "observed": observed,
+                        }
+                    )
+        except Exception as exc:
+            raise RuntimeError(
+                f"enforced MCP benchmark failed; bounded stderr:\n{_stderr_tail(captured_errlog)}"
+            ) from exc
     if approval_control.exists():
         raise AssertionError("approval-control capability remained after proxy shutdown")
     return EnforcedRun(
@@ -1009,6 +1023,12 @@ def _quiet_subprocess_environment() -> dict[str, str]:
     environment = dict(os.environ)
     environment["FASTMCP_LOG_LEVEL"] = "ERROR"
     return environment
+
+
+def _stderr_tail(stream: TextIO, maximum: int = 4_000) -> str:
+    stream.seek(0)
+    content = stream.read()
+    return content[-maximum:] if content else "(no stderr output)"
 
 
 def _rate(numerator: int, denominator: int) -> float:

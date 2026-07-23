@@ -462,7 +462,7 @@
     "python": "3.13.14",
     "wazuh_fixture_version": "4.14.6"
   },
-  "generated_at": "2026-07-23T08:27:23.884482Z",
+  "generated_at": "2026-07-23T08:31:57.976756Z",
   "limitations": [
     "The deterministic lab uses harmless simulated tools, not production SaaS systems.",
     "The call labels measure policy behavior; they do not prove resistance to every prompt injection.",
@@ -471,36 +471,36 @@
   ],
   "performance": {
     "audit_append": {
-      "p50_ms": 0.9347,
-      "p95_ms": 1.0781,
-      "p99_ms": 1.26,
+      "p50_ms": 1.449,
+      "p95_ms": 1.9112,
+      "p99_ms": 2.2695,
       "samples": 30
     },
     "direct_tool_call": {
-      "p50_ms": 5.2407,
-      "p95_ms": 6.7723,
-      "p99_ms": 7.3698,
+      "p50_ms": 5.6185,
+      "p95_ms": 7.9483,
+      "p99_ms": 7.9495,
       "samples": 30
     },
     "enforced_tool_call": {
-      "p50_ms": 20.4278,
-      "p95_ms": 23.0652,
-      "p99_ms": 24.4418,
+      "p50_ms": 21.6491,
+      "p95_ms": 34.881,
+      "p99_ms": 37.7219,
       "samples": 30
     },
     "policy_decision": {
-      "p50_ms": 0.0023,
-      "p95_ms": 0.2663,
-      "p99_ms": 0.3544,
+      "p50_ms": 0.0034,
+      "p95_ms": 0.3808,
+      "p99_ms": 0.429,
       "samples": 10000
     },
     "proxy_overhead": {
-      "p50_ms": 14.4353,
-      "p95_ms": 17.6069,
-      "p99_ms": 17.9787,
+      "p50_ms": 16.1923,
+      "p95_ms": 28.4832,
+      "p99_ms": 31.3815,
       "samples": 30
     },
-    "startup_inventory_ms": 1421.0733
+    "startup_inventory_ms": 1425.4781
   },
   "runner_version": "1.0.0",
   "scenario_counts": {
@@ -525,7 +525,7 @@
     "true_positives": 30
   },
   "source_revision": {
-    "commit": "0f4176895f34e57935f24452cf288e66284b325d",
+    "commit": "c7ebad9fa2d729fdc29d73f97e419f3f341b0a1a",
     "dirty": false
   },
   "suite_fingerprint": "sha256:d74eed87aa7f45153fca57f78b61af45fe7c557445f8b5fec07bcf4a2cfc5a92",
