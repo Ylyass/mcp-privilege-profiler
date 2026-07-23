@@ -1,8 +1,8 @@
 # Provisional name-clearance record
 
-Project name: `MCP Privilege Profiler`  
-Package and repository identifier: `mcp-privilege-profiler`  
-Checked: 2026-07-23
+- Project name: `MCP Privilege Profiler`
+- Package and repository identifier: `mcp-privilege-profiler`
+- Checked: 2026-07-23
 
 ## Exact namespace checks
 
