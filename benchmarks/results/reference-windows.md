@@ -1,9 +1,9 @@
 # Deterministic benchmark report
 
-- Generated: `2026-07-23T08:34:16.011552Z`
+- Generated: `2026-07-23T08:38:13.519139Z`
 - Runner: `1.0.0`
 - Suite: `mcp-privprof-deterministic-v1`
-- Source commit: `36df9a330bbfe19ef62ad2748f81f779445b5513`
+- Source commit: `f7b34b438cd005d8bc441608c28616057af9c51c`
 - Working tree dirty at start: `false`
 
 ## Result
@@ -31,13 +31,13 @@ These are measurements for the published deterministic lab labels, not a claim t
 
 | Measurement | Samples | p50 ms | p95 ms | p99 ms |
 |---|---:|---:|---:|---:|
-| Policy decision and constraints | 10000 | 0.0033 | 0.3896 | 0.4663 |
-| Direct MCP tool call | 30 | 4.9781 | 6.9891 | 7.3726 |
-| Enforced MCP tool call | 30 | 23.0558 | 28.4416 | 28.9427 |
-| Measured proxy delta | 30 | 17.4858 | 22.8781 | 22.9171 |
-| Mandatory JSONL append plus fsync | 30 | 1.1357 | 1.7433 | 7.3898 |
+| Policy decision and constraints | 10000 | 0.0032 | 0.3685 | 0.4262 |
+| Direct MCP tool call | 30 | 5.648 | 8.3729 | 9.4963 |
+| Enforced MCP tool call | 30 | 22.2513 | 27.174 | 27.2819 |
+| Measured proxy delta | 30 | 16.9943 | 21.2893 | 21.6339 |
+| Mandatory JSONL append plus fsync | 30 | 1.1084 | 1.2918 | 1.3804 |
 
-Startup plus complete live inventory: `1294.1959 ms`.
+Startup plus complete live inventory: `1353.1788 ms`.
 
 The proxy delta pairs the same 30 harmless direct and enforced calls. Small negative samples can occur from operating-system scheduling noise.
 
