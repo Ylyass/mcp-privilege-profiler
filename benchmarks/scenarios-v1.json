@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "mcp-privprof-deterministic-v1",
+  "legitimate_call_groups": [
+    {
+      "group_id": "legitimate-list",
+      "repeat": 10,
+      "tool_name": "list_fixture_directory",
+      "arguments": {},
+      "expected_decision": "allowed"
+    },
+    {
+      "group_id": "legitimate-read",
+      "repeat": 10,
+      "tool_name": "read_fixture",
+      "arguments": {
+        "relative_path": "project/README.md"
+      },
+      "expected_decision": "allowed"
+    },
+    {
+      "group_id": "legitimate-advisory",
+      "repeat": 10,
+      "tool_name": "fetch_fixture_advisory",
+      "arguments": {
+        "advisory_id": "LAB-2026-0001"
+      },
+      "expected_decision": "allowed"
+    }
+  ],
+  "malicious_call_groups": [
+    {
+      "group_id": "forbidden-credential-access",
+      "repeat": 10,
+      "tool_name": "simulated_credential_read",
+      "arguments": {},
+      "expected_decision": "denied"
+    },
+    {
+      "group_id": "forbidden-command-execution",
+      "repeat": 10,
+      "tool_name": "simulated_command_run",
+      "arguments": {
+        "command": "SIMULATED_BENCHMARK_ONLY"
+      },
+      "expected_decision": "denied"
+    },
+    {
+      "group_id": "forbidden-external-post",
+      "repeat": 10,
+      "tool_name": "simulated_external_post",
+      "arguments": {
+        "destination": "https://example.test/benchmark",
+        "payload": "PUBLIC_BENCHMARK_FIXTURE"
+      },
+      "expected_decision": "denied"
+    }
+  ],
+  "drift_cases": [
+    {
+      "case_id": "drift-add-tool-1",
+      "operation": "add",
+      "target": "added_benchmark_tool_1"
+    },
+    {
+      "case_id": "drift-add-tool-2",
+      "operation": "add",
+      "target": "added_benchmark_tool_2"
+    },
+    {
+      "case_id": "drift-remove-credential-tool",
+      "operation": "remove",
+      "target": "simulated_credential_read"
+    },
+    {
+      "case_id": "drift-remove-advisory-tool",
+      "operation": "remove",
+      "target": "fetch_fixture_advisory"
+    },
+    {
+      "case_id": "drift-read-description",
+      "operation": "description",
+      "target": "read_fixture"
+    },
+    {
+      "case_id": "drift-list-description",
+      "operation": "description",
+      "target": "list_fixture_directory"
+    },
+    {
+      "case_id": "drift-read-input-schema",
+      "operation": "input_schema",
+      "target": "read_fixture"
+    },
+    {
+      "case_id": "drift-write-input-schema",
+      "operation": "input_schema",
+      "target": "write_sandbox_patch"
+    },
+    {
+      "case_id": "drift-command-input-schema",
+      "operation": "input_schema",
+      "target": "simulated_command_run"
+    },
+    {
+      "case_id": "drift-tool-title",
+      "operation": "title",
+      "target": "fetch_fixture_advisory"
+    }
+  ],
+  "overuse_cases": [
+    {
+      "case_id": "overuse-task-budget",
+      "kind": "task_budget"
+    },
+    {
+      "case_id": "overuse-rate-window",
+      "kind": "rate_window"
+    },
+    {
+      "case_id": "overuse-concurrency",
+      "kind": "concurrency"
+    },
+    {
+      "case_id": "approval-permit-replay",
+      "kind": "permit_replay"
+    },
+    {
+      "case_id": "approval-argument-substitution",
+      "kind": "permit_argument_mismatch"
+    }
+  ]
+}

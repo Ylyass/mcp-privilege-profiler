@@ -5,6 +5,7 @@ actual supported security boundary, not future intentions.
 
 - [Architecture decision records](adrs/README.md)
 - [Architecture](architecture.md)
+- [Deterministic benchmark](benchmark.md)
 - [Policy enforcement](enforcement.md)
 - [Inventory and drift](inventory.md)
 - [Master build and publication plan](master-build-plan.md)

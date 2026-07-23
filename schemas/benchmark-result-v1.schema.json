@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/mcp-privilege-profiler/benchmark-result-v1.schema.json",
+  "title": "MCP Privilege Profiler benchmark result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "benchmark_schema_version",
+    "runner_version",
+    "suite_id",
+    "suite_fingerprint",
+    "generated_at",
+    "source_revision",
+    "environment",
+    "scenario_counts",
+    "security",
+    "performance",
+    "wazuh",
+    "cases",
+    "limitations"
+  ],
+  "properties": {
+    "benchmark_schema_version": {
+      "const": "1.0"
+    },
+    "runner_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "suite_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "suite_fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit",
+        "dirty"
+      ],
+      "properties": {
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "dirty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operating_system",
+        "architecture",
+        "processor",
+        "logical_cpus",
+        "python",
+        "mcp_sdk",
+        "wazuh_fixture_version",
+        "clock"
+      ],
+      "properties": {
+        "operating_system": {
+          "type": "string",
+          "minLength": 1
+        },
+        "architecture": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "logical_cpus": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "python": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mcp_sdk": {
+          "type": "string",
+          "minLength": 1
+        },
+        "wazuh_fixture_version": {
+          "const": "4.14.6"
+        },
+        "clock": {
+          "const": "time.perf_counter_ns"
+        }
+      }
+    },
+    "scenario_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "legitimate",
+        "malicious",
+        "drift",
+        "overuse"
+      ],
+      "properties": {
+        "legitimate": {
+          "type": "integer",
+          "minimum": 30
+        },
+        "malicious": {
+          "type": "integer",
+          "minimum": 30
+        },
+        "drift": {
+          "type": "integer",
+          "minimum": 10
+        },
+        "overuse": {
+          "type": "integer",
+          "minimum": 5
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available_tools",
+        "exposed_tools",
+        "catalog_reduction_rate",
+        "true_positives",
+        "false_positives",
+        "true_negatives",
+        "false_negatives",
+        "precision",
+        "recall",
+        "true_positive_rate",
+        "false_positive_rate",
+        "drift_detection_rate",
+        "overuse_rejection_rate"
+      ],
+      "properties": {
+        "available_tools": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "exposed_tools": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "catalog_reduction_rate": {
+          "$ref": "#/$defs/rate"
+        },
+        "true_positives": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "false_positives": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "true_negatives": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "false_negatives": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "precision": {
+          "$ref": "#/$defs/rate"
+        },
+        "recall": {
+          "$ref": "#/$defs/rate"
+        },
+        "true_positive_rate": {
+          "$ref": "#/$defs/rate"
+        },
+        "false_positive_rate": {
+          "$ref": "#/$defs/rate"
+        },
+        "drift_detection_rate": {
+          "$ref": "#/$defs/rate"
+        },
+        "overuse_rejection_rate": {
+          "$ref": "#/$defs/rate"
+        }
+      }
+    },
+    "performance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_decision",
+        "direct_tool_call",
+        "enforced_tool_call",
+        "proxy_overhead",
+        "startup_inventory_ms",
+        "audit_append"
+      ],
+      "properties": {
+        "policy_decision": {
+          "$ref": "#/$defs/timing"
+        },
+        "direct_tool_call": {
+          "$ref": "#/$defs/timing"
+        },
+        "enforced_tool_call": {
+          "$ref": "#/$defs/timing"
+        },
+        "proxy_overhead": {
+          "$ref": "#/$defs/timing"
+        },
+        "startup_inventory_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "audit_append": {
+          "$ref": "#/$defs/timing"
+        }
+      }
+    },
+    "wazuh": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validation_mode",
+        "fixture_cases",
+        "positive_cases",
+        "near_miss_cases",
+        "static_fixture_precision",
+        "live_engine_revalidation_performed"
+      ],
+      "properties": {
+        "validation_mode": {
+          "const": "static_contract"
+        },
+        "fixture_cases": {
+          "type": "integer",
+          "minimum": 22
+        },
+        "positive_cases": {
+          "type": "integer",
+          "minimum": 11
+        },
+        "near_miss_cases": {
+          "type": "integer",
+          "minimum": 11
+        },
+        "static_fixture_precision": {
+          "const": 1
+        },
+        "live_engine_revalidation_performed": {
+          "const": false
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 75,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case_id",
+          "category",
+          "passed",
+          "observed"
+        ],
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "enum": [
+              "legitimate",
+              "malicious",
+              "drift",
+              "overuse"
+            ]
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "observed": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "samples",
+        "p50_ms",
+        "p95_ms",
+        "p99_ms"
+      ],
+      "properties": {
+        "samples": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "p50_ms": {
+          "type": "number"
+        },
+        "p95_ms": {
+          "type": "number"
+        },
+        "p99_ms": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

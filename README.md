@@ -50,11 +50,15 @@ The current verified build includes:
 - 11 custom Wazuh alert rules with 22 contract-valid positive and near-miss
   fixture cases that pass the real Wazuh 4.14.6 analysis engine; and
 - a repeatable live probe proving proxy denial, agent delivery, rule `100103`,
-  and searchable indexer ingestion for one exact trace.
+  and searchable indexer ingestion for one exact trace; and
+- a schema-validated, deterministic benchmark using the real stdio proxy path
+  with 30 legitimate, 30 forbidden, 10 drift, and 5 overuse/approval-abuse
+  cases, plus p50/p95/p99 measurements and raw machine-readable evidence.
 
-The benchmark, hosted CI, external review, and release publication remain. See the
-[Wazuh bridge guide](docs/wazuh-bridge.md) and [roadmap](docs/roadmap.md) for
-the verified boundary.
+Hosted CI, clean-clone testing, external review, and release publication remain.
+See the [benchmark guide](docs/benchmark.md),
+[Wazuh bridge guide](docs/wazuh-bridge.md), and
+[roadmap](docs/roadmap.md) for the verified boundary.
 
 ## Current commands
 
@@ -110,6 +114,15 @@ The approval-control file is an ephemeral capability containing a live secret.
 Keep it accessible only to the trusted local operator and never commit it.
 See the [enforcement guide](docs/enforcement.md) for the exact call order,
 privacy boundary, limits, permit behavior, and stable reason codes.
+
+Run the deterministic Stage 10 benchmark without Docker:
+
+    uv run python -m benchmarks.runner --json-output benchmarks/results/reference.json --markdown-output benchmarks/results/reference.md
+
+The runner exercises the real local MCP server and enforcement proxy, validates
+75 labeled security cases, and writes versioned raw evidence plus a human-readable
+report. Measurements apply only to the documented deterministic lab and host.
+See the [benchmark guide](docs/benchmark.md) for methodology and claim limits.
 
 ## License
 

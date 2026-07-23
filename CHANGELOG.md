@@ -70,3 +70,8 @@ All notable changes are documented here.
   active named Wazuh lab agent, manager rule `100103`, and the green single-node
   indexer under the same trace ID. The probe discovers the manager-assigned
   agent ID because registration IDs may change when the lab is recreated.
+- Added a schema-validated deterministic benchmark that executes the real stdio
+  enforcement path for 30 legitimate and 30 forbidden calls, applies 10 tool
+  drift mutations, tests five limit/permit abuse cases, revalidates all 22
+  Wazuh fixtures, and publishes raw p50/p95/p99 evidence with explicit claim
+  limits.
