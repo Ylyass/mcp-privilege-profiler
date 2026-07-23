@@ -948,6 +948,14 @@ Exit gate:
 - benchmark data, labels, runner version, and raw results are committed or attached to the release;
 - zero benchmark scenario depends on external mutable services.
 
+Verified on 2026-07-23: the clean-tree Windows reference executed 30 legitimate,
+30 forbidden, 10 tool-drift, and 5 overuse/approval-abuse cases. All 75 passed,
+the catalog was reduced from 7 tools to 4, and the runner emitted schema-valid
+raw JSON plus a Markdown report with p50/p95/p99 timings and explicit
+limitations. The runner also statically revalidated all 22 Wazuh fixtures; the
+separate Stage 9 record remains the evidence for real Wazuh 4.14.6 engine and
+live-ingest behavior.
+
 ### Phase 11 — Documentation, external review, and v0.1.0, 8 hours
 
 Tasks:

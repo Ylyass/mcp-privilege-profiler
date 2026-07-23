@@ -1,0 +1,541 @@
+{
+  "benchmark_schema_version": "1.0",
+  "cases": [
+    {
+      "case_id": "legitimate-list-01",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-list-02",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-list-03",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-list-04",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-list-05",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-list-06",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-list-07",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-list-08",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-list-09",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-list-10",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-01",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-02",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-03",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-04",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-05",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-06",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-07",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-08",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-09",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-read-10",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-01",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-02",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-03",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-04",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-05",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-06",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-07",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-08",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-09",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "legitimate-advisory-10",
+      "category": "legitimate",
+      "observed": "allowed",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-01",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-02",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-03",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-04",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-05",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-06",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-07",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-08",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-09",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-credential-access-10",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-01",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-02",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-03",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-04",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-05",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-06",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-07",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-08",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-09",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-command-execution-10",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-01",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-02",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-03",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-04",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-05",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-06",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-07",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-08",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-09",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "forbidden-external-post-10",
+      "category": "malicious",
+      "observed": "denied",
+      "passed": true
+    },
+    {
+      "case_id": "drift-add-tool-1",
+      "category": "drift",
+      "observed": "security_widening",
+      "passed": true
+    },
+    {
+      "case_id": "drift-add-tool-2",
+      "category": "drift",
+      "observed": "security_widening",
+      "passed": true
+    },
+    {
+      "case_id": "drift-remove-credential-tool",
+      "category": "drift",
+      "observed": "breaking",
+      "passed": true
+    },
+    {
+      "case_id": "drift-remove-advisory-tool",
+      "category": "drift",
+      "observed": "breaking",
+      "passed": true
+    },
+    {
+      "case_id": "drift-read-description",
+      "category": "drift",
+      "observed": "informational",
+      "passed": true
+    },
+    {
+      "case_id": "drift-list-description",
+      "category": "drift",
+      "observed": "informational",
+      "passed": true
+    },
+    {
+      "case_id": "drift-read-input-schema",
+      "category": "drift",
+      "observed": "security_widening",
+      "passed": true
+    },
+    {
+      "case_id": "drift-write-input-schema",
+      "category": "drift",
+      "observed": "security_widening",
+      "passed": true
+    },
+    {
+      "case_id": "drift-command-input-schema",
+      "category": "drift",
+      "observed": "security_widening",
+      "passed": true
+    },
+    {
+      "case_id": "drift-tool-title",
+      "category": "drift",
+      "observed": "informational",
+      "passed": true
+    },
+    {
+      "case_id": "overuse-task-budget",
+      "category": "overuse",
+      "observed": "calls_per_task",
+      "passed": true
+    },
+    {
+      "case_id": "overuse-rate-window",
+      "category": "overuse",
+      "observed": "calls_per_minute",
+      "passed": true
+    },
+    {
+      "case_id": "overuse-concurrency",
+      "category": "overuse",
+      "observed": "concurrent_calls",
+      "passed": true
+    },
+    {
+      "case_id": "approval-permit-replay",
+      "category": "overuse",
+      "observed": "MCP_PRIVPROF_PERMIT_REPLAY",
+      "passed": true
+    },
+    {
+      "case_id": "approval-argument-substitution",
+      "category": "overuse",
+      "observed": "MCP_PRIVPROF_PERMIT_ARGUMENT_MISMATCH",
+      "passed": true
+    }
+  ],
+  "environment": {
+    "architecture": "AMD64",
+    "clock": "time.perf_counter_ns",
+    "logical_cpus": 16,
+    "mcp_sdk": "1.28.1",
+    "operating_system": "Windows-11-10.0.26200-SP0",
+    "processor": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
+    "python": "3.13.14",
+    "wazuh_fixture_version": "4.14.6"
+  },
+  "generated_at": "2026-07-23T08:27:23.884482Z",
+  "limitations": [
+    "The deterministic lab uses harmless simulated tools, not production SaaS systems.",
+    "The call labels measure policy behavior; they do not prove resistance to every prompt injection.",
+    "Performance values describe this machine and run only, and include local filesystem effects.",
+    "This run validates Wazuh fixtures statically; Stage 9 separately records real Wazuh 4.14.6 logtest and live-ingest evidence."
+  ],
+  "performance": {
+    "audit_append": {
+      "p50_ms": 0.9347,
+      "p95_ms": 1.0781,
+      "p99_ms": 1.26,
+      "samples": 30
+    },
+    "direct_tool_call": {
+      "p50_ms": 5.2407,
+      "p95_ms": 6.7723,
+      "p99_ms": 7.3698,
+      "samples": 30
+    },
+    "enforced_tool_call": {
+      "p50_ms": 20.4278,
+      "p95_ms": 23.0652,
+      "p99_ms": 24.4418,
+      "samples": 30
+    },
+    "policy_decision": {
+      "p50_ms": 0.0023,
+      "p95_ms": 0.2663,
+      "p99_ms": 0.3544,
+      "samples": 10000
+    },
+    "proxy_overhead": {
+      "p50_ms": 14.4353,
+      "p95_ms": 17.6069,
+      "p99_ms": 17.9787,
+      "samples": 30
+    },
+    "startup_inventory_ms": 1421.0733
+  },
+  "runner_version": "1.0.0",
+  "scenario_counts": {
+    "drift": 10,
+    "legitimate": 30,
+    "malicious": 30,
+    "overuse": 5
+  },
+  "security": {
+    "available_tools": 7,
+    "catalog_reduction_rate": 0.428571,
+    "drift_detection_rate": 1.0,
+    "exposed_tools": 4,
+    "false_negatives": 0,
+    "false_positive_rate": 0.0,
+    "false_positives": 0,
+    "overuse_rejection_rate": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "true_negatives": 30,
+    "true_positive_rate": 1.0,
+    "true_positives": 30
+  },
+  "source_revision": {
+    "commit": "0f4176895f34e57935f24452cf288e66284b325d",
+    "dirty": false
+  },
+  "suite_fingerprint": "sha256:d74eed87aa7f45153fca57f78b61af45fe7c557445f8b5fec07bcf4a2cfc5a92",
+  "suite_id": "mcp-privprof-deterministic-v1",
+  "wazuh": {
+    "fixture_cases": 22,
+    "live_engine_revalidation_performed": false,
+    "near_miss_cases": 11,
+    "positive_cases": 11,
+    "static_fixture_precision": 1.0,
+    "validation_mode": "static_contract"
+  }
+}

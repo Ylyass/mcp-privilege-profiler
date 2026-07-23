@@ -71,8 +71,8 @@ Keep the Wazuh Docker lab stopped; the Stage 10 runner does not require Docker:
 
 ```powershell
 uv run python -m benchmarks.runner `
-  --json-output benchmarks/results/reference.json `
-  --markdown-output benchmarks/results/reference.md
+  --json-output benchmarks/results/reference-windows.json `
+  --markdown-output benchmarks/results/reference-windows.md
 ```
 
 The JSON file contains the exact cases, environment, metrics, runner version,

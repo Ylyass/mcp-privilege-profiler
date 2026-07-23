@@ -15,7 +15,7 @@ order so later security decisions are built on verified lower layers.
 | 7. Enforcement and catalog minimization | Verified | Reviewed policy, filtered catalog, exact constraints, stable errors, and fail-closed drift work |
 | 8. Limits, audit, and permits | Verified | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
 | 9. Wazuh bridge | Verified | Static validation, 22 real logtest cases, and live proxy-to-agent-to-manager-to-indexer delivery pass |
-| 10. Benchmark and complete test matrix | Not started | Reproducible measured security and performance evidence |
+| 10. Benchmark and complete test matrix | Verified | 75 deterministic security cases, raw schema-valid results, p50/p95/p99 measurements, and 158 passing tests |
 | 11. Documentation, external review, release | Not started | Clean-clone reviews and open-source release artifacts |
 
 Stage 8 enforce mode keeps the Stage 7 exact catalog and constraint gates, then
@@ -32,4 +32,14 @@ JSON decoder. All 22 fixture cases now pass the real Wazuh 4.14.6 analysis
 engine. The bounded live probe also proved that a real proxy denial was
 collected by the active `mcp-privprof-lab` Wazuh agent, became rule `100103` at
 level 10, and was searchable in the green single-node indexer under the same trace ID. This
-closes Stage 9; Stage 10 is the next implementation stage.
+closes Stage 9.
+
+Stage 10 now has a versioned deterministic suite with 30 legitimate calls, 30
+forbidden calls, 10 catalog-drift changes, and 5 overuse/approval-abuse cases.
+The runner uses the real local MCP server and installed enforcement proxy,
+production drift/limit/permit services, and all 22 Wazuh fixtures. The committed
+clean-tree Windows reference passed all 75 cases, reduced the exposed catalog
+from 7 to 4 tools (42.86%), blocked all labeled forbidden calls with no labeled
+legitimate-call false positives, and detected every labeled drift and overuse
+case. It publishes schema-valid raw results and p50/p95/p99 timings with explicit
+machine and claim limitations. Stage 11 is now the next implementation stage.

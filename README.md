@@ -117,7 +117,7 @@ privacy boundary, limits, permit behavior, and stable reason codes.
 
 Run the deterministic Stage 10 benchmark without Docker:
 
-    uv run python -m benchmarks.runner --json-output benchmarks/results/reference.json --markdown-output benchmarks/results/reference.md
+    uv run python -m benchmarks.runner --json-output benchmarks/results/reference-windows.json --markdown-output benchmarks/results/reference-windows.md
 
 The runner exercises the real local MCP server and enforcement proxy, validates
 75 labeled security cases, and writes versioned raw evidence plus a human-readable

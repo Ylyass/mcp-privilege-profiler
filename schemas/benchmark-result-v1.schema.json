@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/mcp-privilege-profiler/benchmark-result-v1.schema.json",
+  "$id": "https://mcp-privilege-profiler.dev/schemas/benchmark-result-v1.schema.json",
   "title": "MCP Privilege Profiler benchmark result v1",
   "type": "object",
   "additionalProperties": false,

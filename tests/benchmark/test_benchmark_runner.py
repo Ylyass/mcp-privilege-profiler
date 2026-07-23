@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+from typing import cast
 
 import mcp.types as types
 import pytest
@@ -14,8 +16,11 @@ from benchmarks.runner import (
     percentile_timings,
     run_drift_cases,
     run_overuse_cases,
+    validate_result,
 )
 from mcp_privprof.adapters.mcp.inventory import CollectedCatalog, snapshot_toolset
+
+ROOT = Path(__file__).parents[2]
 
 
 @pytest.fixture
@@ -95,3 +100,27 @@ async def test_every_overuse_and_approval_abuse_case_fails_closed(tmp_path: Path
 
     assert len(cases) == MINIMUM_COUNTS["overuse"] == 5
     assert all(case["passed"] is True for case in cases)
+
+
+def test_committed_reference_result_is_clean_and_schema_valid() -> None:
+    """Published raw evidence must remain tied to one clean source revision."""
+    value: object = json.loads(
+        (ROOT / "benchmarks" / "results" / "reference-windows.json").read_text(encoding="utf-8")
+    )
+    if not isinstance(value, dict):
+        raise TypeError("reference benchmark must contain one JSON object")
+    result = cast(dict[str, object], value)
+
+    validate_result(result)
+
+    source = result["source_revision"]
+    assert isinstance(source, dict)
+    assert source["dirty"] is False
+    cases = result["cases"]
+    assert isinstance(cases, list)
+    checked_cases = cast(list[object], cases)
+    assert len(checked_cases) == 75
+    for case in checked_cases:
+        assert isinstance(case, dict)
+        checked_case = cast(dict[str, object], case)
+        assert checked_case.get("passed") is True

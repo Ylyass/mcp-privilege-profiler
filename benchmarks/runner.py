@@ -284,7 +284,7 @@ async def run_benchmark(manifest: JsonObject, work_root: Path) -> JsonObject:
             ),
         ],
     }
-    _validate_result(result)
+    validate_result(result)
     if not all(item["passed"] is True for item in all_cases):
         raise AssertionError("one or more benchmark cases failed")
     return result
@@ -829,8 +829,8 @@ def render_report(result: Mapping[str, object]) -> str:
             "",
             "```powershell",
             "uv run python -m benchmarks.runner "
-            "--json-output benchmarks/results/reference.json "
-            "--markdown-output benchmarks/results/reference.md",
+            "--json-output benchmarks/results/reference-windows.json "
+            "--markdown-output benchmarks/results/reference-windows.md",
             "```",
             "",
             "## Limitations",
@@ -964,7 +964,7 @@ def _load_json_object(path: Path) -> JsonObject:
     return cast(JsonObject, untyped)
 
 
-def _validate_result(result: JsonObject) -> None:
+def validate_result(result: JsonObject) -> None:
     schema = _load_json_object(RESULT_SCHEMA)
     validator = cast(
         JsonValidator,
