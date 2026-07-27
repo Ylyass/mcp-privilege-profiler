@@ -11,12 +11,12 @@ order so later security decisions are built on verified lower layers.
 | 3. Safe MCP lab | Verified | Deterministic tools and harmless compromised-agent scenarios |
 | 4. Transparent stdio proxy | Verified | Real client to proxy to server flow, failures, pagination, cancellation, and shutdown |
 | 5. Inventory, fingerprints, and drift | Verified | Persistence, reports, live refresh component, and conservative comparison work |
-| 6. Profiling and human review | Verified | Launch-bound scenarios, privacy-safe evidence, exact review gate, and policy artifacts work |
+| 6. Profiling and human review | Real review completed | Two real Claude runs produced six expected calls; all seven decisions were explicitly reviewed and bound to the evidence |
 | 7. Enforcement and catalog minimization | Verified | Reviewed policy, filtered catalog, exact constraints, stable errors, and fail-closed drift work |
 | 8. Limits, audit, and permits | Verified | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
 | 9. Wazuh bridge | Verified | Static validation, 22 real logtest cases, and live proxy-to-agent-to-manager-to-indexer delivery pass |
 | 10. Benchmark and complete test matrix | Verified | 75 deterministic security cases, raw schema-valid results, p50/p95/p99 measurements, and 159 passing tests |
-| 11. Documentation, external review, release | In progress | CI, issue forms, PR template, Dependabot, and release process are defined; name clearance, hosted runs, clean clones, external reviews, and publication remain |
+| 11. Documentation, external review, release | In progress | Controlled real-agent acceptance passed; name clearance, hosted CI, clean clones, external reviews, and publication remain |
 
 Stage 8 enforce mode keeps the Stage 7 exact catalog and constraint gates, then
 reserves reviewed per-tool limits, consumes an exact single-use approval when
@@ -49,3 +49,15 @@ pins, a Linux/Windows and Python 3.13/3.14 test matrix, build smoke tests,
 Dependabot configuration, structured issue forms, a security-aware pull-request
 template, and an explicit release process. These files are locally validated
 configuration until a GitHub remote exists and the hosted checks actually pass.
+
+The controlled real-Claude profiling phase also passed: two completed runs made
+exactly six successful calls to the three expected read-only lab tools, no unused
+tool was called, and the sealed evidence passed a raw-value and personal-identifier
+scan. The operator then explicitly reviewed all seven tools. The generated
+deny-by-default policy passed a direct enforcement preflight with three visible
+tools, four direct denials, exact argument and task-limit rejection, downstream
+non-forwarding, and privacy-safe JSONL/SQLite evidence. The final enforced Claude
+run also passed: the model saw only three tools, called each exactly once, and
+produced six schema-valid privacy-minimized audit events. The current gates are
+release engineering, hosted CI, clean-clone usability, external review, and name
+clearance.

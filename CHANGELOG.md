@@ -4,6 +4,18 @@ All notable changes are documented here.
 
 ## Unreleased
 
+- Added a documented real-Claude profiling acceptance with two controlled runs,
+  six expected read-only MCP calls, a sealed evidence fingerprint, and a privacy
+  scan.
+- Recorded the explicit seven-tool human review, generated its evidence-bound
+  deny-by-default policy, and passed a direct enforcement preflight covering
+  catalog minimization, all four hidden-tool denials, exact constraints, limits,
+  downstream non-forwarding, and JSONL/SQLite privacy.
+- Completed the controlled enforced Claude run through the reviewed three-tool
+  catalog with three exact successful calls, six schema-valid audit events, and
+  no raw values in JSONL or SQLite.
+- Added a beginner-focused visual explanation connecting the model, host, proxy,
+  MCP server, evidence, policy, Docker lab, and Wazuh bridge.
 - Added a minimal-permission, full-SHA-pinned GitHub Actions workflow covering
   Linux and Windows on Python 3.13 and 3.14, deterministic benchmark
   verification, and distribution smoke tests.

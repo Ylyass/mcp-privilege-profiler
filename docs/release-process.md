@@ -11,6 +11,10 @@ Completed locally:
 - strict lint, formatting, type, and test gates;
 - deterministic benchmark with raw schema-valid evidence;
 - static and live Wazuh 4.14.6 bridge validation;
+- sealed real-Claude profiling evidence from two controlled runs and six expected
+  read-only MCP calls;
+- explicit human review and a successful enforced Claude task through the
+  three-tool reviewed catalog;
 - Apache-2.0 license, notice, security policy, contribution guide, code of
   conduct, issue forms, and pull-request template; and
 - minimal-permission CI defined for Linux and Windows on Python 3.13 and 3.14.

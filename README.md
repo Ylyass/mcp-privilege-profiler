@@ -53,15 +53,27 @@ The current verified build includes:
   and searchable indexer ingestion for one exact trace; and
 - a schema-validated, deterministic benchmark using the real stdio proxy path
   with 30 legitimate, 30 forbidden, 10 drift, and 5 overuse/approval-abuse
-  cases, plus p50/p95/p99 measurements and raw machine-readable evidence.
+  cases, plus p50/p95/p99 measurements and raw machine-readable evidence; and
+- a sealed real-Claude profiling result with two controlled runs, six expected
+  successful read-only calls, zero unused-tool calls, and privacy-checked
+  evidence; and
+- an explicit seven-tool review and generated policy whose direct enforcement
+  preflight exposed three read-only tools, denied all four hidden tools, enforced
+  exact arguments and task limits, prevented downstream writes, and omitted raw
+  values from JSONL and SQLite; and
+- a successful enforced Claude task that saw only the reviewed three-tool
+  catalog, called each tool once, and produced six schema-valid
+  privacy-minimized events.
 
 Hosted CI is now defined with minimal permissions and full-SHA action pins, but
 it has not run because no public GitHub remote is configured. Name clearance,
 the first hosted run, clean-clone testing, external review, and release
 publication remain.
 See the [benchmark guide](docs/benchmark.md),
-[Wazuh bridge guide](docs/wazuh-bridge.md), and
+[Wazuh bridge guide](docs/wazuh-bridge.md),
 [competitive landscape](docs/competitive-landscape.md),
+[real-agent acceptance procedure](docs/claude-code-acceptance.md),
+[plain-language project explanation](docs/project-explained.md),
 [release process](docs/release-process.md), and
 [roadmap](docs/roadmap.md) for the verified boundary.
 
