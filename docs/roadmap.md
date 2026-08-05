@@ -16,7 +16,7 @@ order so later security decisions are built on verified lower layers.
 | 8. Limits, audit, and permits | Verified | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
 | 9. Wazuh bridge | Static SDK v2 tests pass; live rerun pending | Decoder/rule contracts pass; earlier 22-engine-case and live delivery proof is historical |
 | 10. Benchmark and complete test matrix | Current SDK v2 suite and clean benchmark pass | 75/75 cases pass from commit `3f7ba2a` after lifecycle corrections |
-| 11. Documentation, external review, release | In progress | Private GitHub staging, hosted CI, and current benchmark pass; Wazuh refresh, independent review, name clearance, artifacts, and publication remain |
+| 11. Documentation, external review, release | Public pre-alpha source published | Hosted CI and current benchmark pass; Wazuh refresh, independent review, name clearance, artifacts, and a versioned release remain |
 
 Stage 8 enforce mode keeps the Stage 7 exact catalog and constraint gates, then
 reserves reviewed per-tool limits, consumes an exact single-use approval when
@@ -33,7 +33,7 @@ engine. The bounded live probe also proved that a real proxy denial was
 collected by the active `mcp-privprof-lab` Wazuh agent, became rule `100103` at
 level 10, and was searchable in the green single-node indexer under the same trace ID.
 This closes the Stage 9 implementation, but the live path must be repeated on
-the exact SDK v2 release candidate before publication.
+the exact SDK v2 release candidate before a versioned release.
 
 Stage 10 now has a versioned deterministic suite with 30 legitimate calls, 30
 forbidden calls, 10 catalog-drift changes, and 5 overuse/approval-abuse cases.
@@ -53,9 +53,9 @@ Dependabot configuration, structured issue forms, a security-aware pull-request
 template, an explicit release process, and a source-checkout safe demo. The demo
 uses the real enforcement proxy, exposes three tools from a seven-tool lab,
 passes three exact read-only calls, rejects a direct hidden write-tool call
-before forwarding, and validates seven privacy-minimized events. The private
-staging repository now exists, and hosted CI passed on Linux and Windows with
-Python 3.13 and 3.14 at commit `beaa6e9`. A post-migration source build produced a 56-entry wheel
+before forwarding, and validates seven privacy-minimized events. The source
+repository is public as a pre-alpha project, and hosted CI passed on Linux and
+Windows with Python 3.13 and 3.14 at publication commit `e4f54a8`. A post-migration source build produced a 56-entry wheel
 and 198-entry source archive, both passed isolated installation smoke tests,
 and a fresh 197-file clean-tree copy passed locked installation, CLI startup,
 and the safe demo.
@@ -79,5 +79,5 @@ non-forwarding, and privacy-safe JSONL/SQLite evidence. The final enforced Claud
 run also passed: the model saw only three tools, called each exactly once, and
 produced six schema-valid privacy-minimized audit events. The current gates are
 the post-SDK2 Wazuh live refresh, independent clean-clone and security review,
-final name clearance, release artifacts, and publication. The refreshed clean
+final name clearance, release artifacts, and a versioned release. The refreshed clean
 benchmark passes all 75 cases at commit `3f7ba2a`.

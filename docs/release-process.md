@@ -1,11 +1,12 @@
 # Release and open-source publication process
 
-The repository is pre-alpha. A local build passing tests is not sufficient for
-a public release or a production claim.
+The source repository is public as a pre-alpha project. Public source and a
+passing local build are not the same as a versioned release or a production
+claim.
 
 ## Current release gates
 
-Completed in private staging:
+Completed for public source publication:
 
 - locked Python 3.13 development environment;
 - stable MCP Python SDK 2.0.0 migration with current-protocol negotiation and
@@ -31,10 +32,10 @@ Completed in private staging:
   metadata, and a documented GitHub private-reporting path; and
 - a locked-runtime vulnerability and licence review, including remediation of
   CVE-2026-69247 by raising `cryptography` to 50.0.0; and
-- a private GitHub staging repository with dependency graph, Dependabot alerts,
+- a public GitHub source repository with dependency graph, Dependabot alerts,
   security updates, and malware alerts enabled; and
 - minimal-permission hosted CI passing on Linux and Windows with Python 3.13 and
-  3.14 at commit `beaa6e9a4e382de27a385c26f433b56fd1e01f95`.
+  3.14 at publication commit `e4f54a82627d8e8b85fdc840e9e1741e12775042`.
 
 The real-Claude profile, review, direct enforcement preflight, and real-agent
 enforcement were repeated after the SDK v2 migration from clean commit
@@ -75,8 +76,8 @@ actions are pinned to reviewed full commit SHAs. It:
   Windows with Python 3.13 and 3.14; and
 - builds and smoke-tests both the wheel and source distribution.
 
-The workflow passed in the private GitHub staging repository at commit
-`beaa6e9a4e382de27a385c26f433b56fd1e01f95`. Every release tag must trigger and
+The workflow passed in the public GitHub repository at publication commit
+`e4f54a82627d8e8b85fdc840e9e1741e12775042`. Every release tag must trigger and
 pass the same required checks; one green historical run is not a permanent
 guarantee.
 

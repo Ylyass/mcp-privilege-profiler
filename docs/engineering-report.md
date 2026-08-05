@@ -3,7 +3,7 @@
 - **Document status:** Living pre-release engineering report
 - **Report version:** 0.1-draft
 - **Evidence cut-off:** 5 August 2026
-- **Project status:** Pre-alpha; Stage 11 open-source preparation in progress
+- **Project status:** Public pre-alpha source project; versioned release preparation remains in progress
 - **Repository name:** `mcp-privilege-profiler` selected; package publication
   remains subject to final trademark and confusion review
 
@@ -882,7 +882,7 @@ reviewed task that genuinely requires a write.
 
 ## 15. Open-source publication state
 
-### 15.1 Completed in private staging
+### 15.1 Completed for public source publication
 
 - Apache-2.0 license and notice;
 - code of conduct, contributing, and security policy;
@@ -890,8 +890,9 @@ reviewed task that genuinely requires a write.
 - a focused, reviewable commit history on `main`;
 - GitHub Actions workflow with minimal permissions and full-SHA action pins;
 - Linux/Windows and Python 3.13/3.14 matrix;
-- private GitHub staging repository and a green hosted matrix at commit
-  `beaa6e9a4e382de27a385c26f433b56fd1e01f95`;
+- public GitHub source repository at
+  `https://github.com/Ylyass/mcp-privilege-profiler` and a green hosted matrix
+  at publication commit `e4f54a82627d8e8b85fdc840e9e1741e12775042`;
 - Dependabot, issue forms, and pull-request template;
 - selected public repository identifier, professional package metadata, and a
   GitHub private-vulnerability-reporting path;
@@ -925,23 +926,20 @@ The real-Wazuh engine and live-ingestion records remain historical.
 
 - no clean-clone test by another person;
 - no external security or usability review;
-- no completed public release;
+- no tagged/versioned GitHub release or PyPI package;
 - no final trademark/domain/confusion clearance for package publication;
 - no post-SDK-v2 live-Wazuh acceptance run;
 - no production support commitment.
 
-### 15.3 Publication sequence
+### 15.3 Sequence from public source to a versioned release
 
-1. update evidence, beginner documentation, and this living report;
-2. run the complete local gates and refresh the build inspection, dependency
-   review, and live Wazuh proof on the candidate;
-3. push the evidence update and require hosted CI to pass;
-4. run an independent clean-clone test;
-5. perform external MCP, security, and usability reviews;
-6. complete final package-name confusion and trademark review;
-7. produce the SBOM, checksums, and release notes;
-8. publish a pre-alpha release candidate with explicit limitations; and
-9. publish `v0.1.0` only after its release gates pass.
+1. run an independent clean-clone test;
+2. refresh the live Wazuh proof on the exact release candidate;
+3. perform external MCP, security, and usability reviews;
+4. complete final package-name confusion and trademark review;
+5. produce the SBOM, checksums, and release notes;
+6. publish a pre-alpha release candidate with explicit limitations; and
+7. publish `v0.1.0` only after its release gates pass.
 
 ## 16. What was learned
 
@@ -1069,7 +1067,7 @@ These are candidates, not committed release claims.
 | 8. Limits, audit, permits | Verified | Persistent limits, fsync audit, single-use approval |
 | 9. Wazuh bridge | Static SDK v2 tests pass; live rerun pending | Earlier 22 engine cases and live alert remain historical |
 | 10. Benchmark | Current clean SDK v2 run passed | 75/75 cases at `3f7ba2a` after lifecycle corrections |
-| 11. Publication | In progress | Private staging, hosted CI, and current benchmark pass; Wazuh refresh, independent review, artifacts, and release remain |
+| 11. Publication | Public pre-alpha source published | Hosted CI and current benchmark pass; Wazuh refresh, independent review, artifacts, and a versioned release remain |
 
 ## Appendix B. Honest project description
 
@@ -1081,4 +1079,4 @@ These are candidates, not committed release claims.
 > controlled real-agent acceptance, hosted CI, and the current clean 75-case
 > benchmark pass. The live Wazuh evidence still requires refresh. A source-checkout
 > safe demo exercises the enforced boundary, while independent clean-clone
-> review, external review, release artifacts, and public release remain.
+> review, external review, release artifacts, and a versioned release remain.

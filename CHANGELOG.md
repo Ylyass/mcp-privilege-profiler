@@ -4,6 +4,10 @@ All notable changes are documented here.
 
 ## Unreleased
 
+- Published the source repository as a public pre-alpha project, added focused
+  MCP, AI-agent-security, least-privilege, Wazuh, Python, and cybersecurity
+  discovery topics, and retained explicit limitations for any future versioned
+  release.
 - Repeated the controlled real-Claude acceptance after the SDK 2.0.0 migration:
   two explicitly completed profile runs produced six successful read-only calls,
   sealed evidence fingerprint

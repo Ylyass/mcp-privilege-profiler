@@ -5,8 +5,9 @@ least-privilege policies from labeled successful runs, requires human review,
 enforces exact decisions, detects tool-definition drift, and emits
 privacy-minimized JSONL events for Wazuh.
 
-Status: pre-alpha. The public repository identifier is
-`mcp-privilege-profiler`; package release remains provisional until the final
+Status: public pre-alpha source project. The repository is published for
+inspection, safe-lab use, and contribution. No PyPI package or versioned GitHub
+release exists yet; the package name remains provisional until the final
 trademark, confusion, and registry checks are completed.
 
 The implementation is locked to MCP Python SDK 2.0.0. Downstream stdio uses
@@ -109,8 +110,8 @@ runs, sealed evidence, seven human decisions, a deny-by-default policy, a
 also passed on that commit across Linux and Windows with Python 3.13 and 3.14,
 including quality, security-contract, build, and distribution-smoke gates. The
 live Wazuh proof is still pre-migration evidence and must be refreshed before a
-release-candidate claim. Final name clearance, independent review, release
-artifacts, and publication also remain.
+release-candidate claim. Final name clearance, independent review, and release
+artifacts remain before a versioned release.
 See the [benchmark guide](docs/benchmark.md),
 [Wazuh bridge guide](docs/wazuh-bridge.md),
 [competitive landscape](docs/competitive-landscape.md),
