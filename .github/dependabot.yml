@@ -13,9 +13,13 @@ updates:
       - dependencies
       - python
     groups:
-      compatible-python-updates:
+      development-tool-updates:
         patterns:
-          - "*"
+          - hypothesis
+          - pre-commit
+          - pyright
+          - pytest
+          - ruff
         update-types:
           - minor
           - patch
