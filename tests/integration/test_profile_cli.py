@@ -577,23 +577,42 @@ async def test_cancelled_profile_call_remains_an_incomplete_attempt(tmp_path: Pa
         ],
         cwd=PROJECT_ROOT,
     )
+    service = ProfileService(SqliteProfileRepository(database))
+    await service.initialize()
     with anyio.fail_after(30):
         async with (
             stdio_client(parameters) as streams,
             ClientSession(*streams) as session,
         ):
             await session.initialize()
-            with anyio.move_on_after(0.05) as cancellation:
-                await session.call_tool(
-                    "delayed_echo",
-                    {"text": "private-value", "delay_seconds": 1.0},
-                )
-            assert cancellation.cancel_called
+            call_scope: anyio.CancelScope | None = None
+            scope_ready = anyio.Event()
+
+            async def call_delayed_tool() -> None:
+                nonlocal call_scope
+                with anyio.CancelScope() as scope:
+                    call_scope = scope
+                    scope_ready.set()
+                    await session.call_tool(
+                        "delayed_echo",
+                        {"text": "private-value", "delay_seconds": 5.0},
+                    )
+
+            async with anyio.create_task_group() as task_group:
+                task_group.start_soon(call_delayed_tool)
+                await scope_ready.wait()
+                with anyio.fail_after(5):
+                    while not any(
+                        call.tool_name == "delayed_echo"
+                        for call in await service.calls("profile-cancel-1")
+                    ):
+                        await anyio.sleep(0.01)
+                assert call_scope is not None
+                call_scope.cancel()
+
             recovered = await session.call_tool("immediate_echo", {"text": "still-alive"})
             assert recovered.is_error is not True
 
-    service = ProfileService(SqliteProfileRepository(database))
-    await service.initialize()
     calls = await service.calls("profile-cancel-1")
     assert [(call.tool_name, call.outcome) for call in calls] == [
         ("delayed_echo", None),
