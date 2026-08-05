@@ -12,6 +12,7 @@ import anyio
 import mcp.types as types
 import pytest
 from anyio.to_thread import run_sync as run_sync_in_worker_thread
+from click import unstyle
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.shared.exceptions import MCPError
@@ -134,6 +135,39 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
 
     service = ProfileService(SqliteProfileRepository(database))
     await service.initialize()
+    unconfirmed = await run_sync_in_worker_thread(
+        runner.invoke,
+        app,
+        [
+            "profile",
+            "complete-run",
+            "--run-id",
+            "run-real-1",
+            "--database",
+            str(database),
+        ],
+    )
+    assert unconfirmed.exit_code == 2
+    unconfirmed_output = unstyle(unconfirmed.output)
+    for word in ("explicit", "success", "confirmation", "required"):
+        assert word in unconfirmed_output
+
+    completed = await run_sync_in_worker_thread(
+        runner.invoke,
+        app,
+        [
+            "profile",
+            "complete-run",
+            "--run-id",
+            "run-real-1",
+            "--confirm-success",
+            "--database",
+            str(database),
+        ],
+    )
+    assert completed.exit_code == 0, completed.output
+    assert "explicit operator confirmation" in completed.output
+
     runs = await service.runs("profile-real-1")
     calls = await service.calls("profile-real-1")
     assert len(runs) == 1

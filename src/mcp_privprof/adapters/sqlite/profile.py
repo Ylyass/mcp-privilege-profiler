@@ -208,16 +208,37 @@ class SqliteProfileRepository:
             raise ValueError("finished run must be completed or aborted")
         async with aiosqlite.connect(self._database_path) as database:
             await configure_database(database)
-            cursor = await database.execute(
-                """
-                UPDATE profile_runs
-                SET status = ?, completed_at = ?
-                WHERE run_id = ? AND status = 'OPEN'
-                """,
-                (run.status.value, _format_timestamp(run.completed_at), run.run_id),
-            )
+            if run.status is RunStatus.COMPLETED:
+                cursor = await database.execute(
+                    """
+                    UPDATE profile_runs
+                    SET status = ?, completed_at = ?
+                    WHERE run_id = ?
+                      AND status = 'OPEN'
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM profile_calls
+                          WHERE profile_calls.run_id = profile_runs.run_id
+                            AND profile_calls.outcome IS NULL
+                      )
+                    """,
+                    (run.status.value, _format_timestamp(run.completed_at), run.run_id),
+                )
+            else:
+                cursor = await database.execute(
+                    """
+                    UPDATE profile_runs
+                    SET status = ?, completed_at = ?
+                    WHERE run_id = ? AND status = 'OPEN'
+                    """,
+                    (run.status.value, _format_timestamp(run.completed_at), run.run_id),
+                )
             if cursor.rowcount != 1:
                 await cursor.close()
+                if run.status is RunStatus.COMPLETED:
+                    raise ValueError(
+                        "run does not exist, is already finished, or has unfinished calls"
+                    )
                 raise ValueError("run does not exist or is already finished")
             await cursor.close()
             await database.commit()

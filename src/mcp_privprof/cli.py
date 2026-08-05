@@ -477,6 +477,38 @@ def profile_abort_run(
     typer.echo(f"Marked run {run_id} as aborted.")
 
 
+@profile_app.command("complete-run")
+def profile_complete_run(
+    run_id: Annotated[
+        str,
+        typer.Option("--run-id", help="Open run whose successful output was reviewed."),
+    ],
+    confirm_success: Annotated[
+        bool,
+        typer.Option(
+            "--confirm-success",
+            help="Confirm that the operator reviewed the task output as successful.",
+        ),
+    ] = False,
+    database: Annotated[
+        Path,
+        typer.Option("--database", help="SQLite inventory and profile evidence store."),
+    ] = Path(".mcp-privprof/state.sqlite3"),
+) -> None:
+    """Human-confirm a successful open run after the MCP host disconnects."""
+    _require_nonblank(("--run-id", run_id))
+    if not confirm_success:
+        raise typer.BadParameter(
+            "explicit success confirmation is required",
+            param_hint="--confirm-success",
+        )
+    try:
+        anyio.run(partial(_complete_profile_run, database=database, run_id=run_id))
+    except Exception as exc:
+        _fail("Run completion", exc)
+    typer.echo(f"Marked run {run_id} as completed after explicit operator confirmation.")
+
+
 @profile_app.command("seal")
 def profile_seal(
     profile_id: Annotated[str, typer.Option("--profile-id", help="Profile to seal or report.")],
@@ -649,12 +681,16 @@ async def _serve_profile_run(
                 completed_at=datetime.now(UTC),
             )
         raise
-    else:
-        await service.finish_run(
-            run_id,
-            status=RunStatus.COMPLETED,
-            completed_at=datetime.now(UTC),
-        )
+
+
+async def _complete_profile_run(*, database: Path, run_id: str) -> None:
+    service = ProfileService(SqliteProfileRepository(database))
+    await service.initialize()
+    await service.finish_run(
+        run_id,
+        status=RunStatus.COMPLETED,
+        completed_at=datetime.now(UTC),
+    )
 
 
 async def _abort_profile_run(*, database: Path, run_id: str) -> None:

@@ -4,6 +4,9 @@ All notable changes are documented here.
 
 ## Unreleased
 
+- Require explicit operator confirmation before a successful profile run can
+  strengthen least-privilege evidence, with atomic rejection when any tool call
+  is unfinished.
 - Migrated the complete proxy, lab, tests, and locked environment to the stable
   MCP Python SDK 2.0.0 and its 2026-07-28 protocol types.
 - Switched downstream connections to SDK v2 auto negotiation, disabled the

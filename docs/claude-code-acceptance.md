@@ -207,9 +207,21 @@ read, simulated command, simulated external post, or any operation outside this
 sequence.
 
 After Claude returns the summary, exit the session normally with `/exit`. Do not
-reuse or resume the session. Repeat with the second configuration only after the
-first run is confirmed complete. After the second controlled session, remove the
-terminal-scoped privacy variable:
+reuse or resume the session. A host may terminate a local stdio child without a
+graceful shutdown, and transport closure alone is not evidence that the task
+succeeded. Review the output, confirm that only the three expected calls
+succeeded, and explicitly label the run:
+
+```powershell
+uv run mcp-privprof profile complete-run `
+  --run-id claude-v4-profile-run-001 `
+  --confirm-success `
+  --database .mcp-privprof/claude-demo/profile-v4.sqlite3
+```
+
+The command fails closed if any call is unfinished. Repeat with the second
+configuration only after the first run is confirmed complete. After the second
+controlled session, remove the terminal-scoped privacy variable:
 
 ```powershell
 Remove-Item Env:CLAUDE_CODE_SKIP_PROMPT_HISTORY
@@ -240,8 +252,8 @@ behavior.
 
 ## Recovery from an interrupted session
 
-If Claude Code or the terminal closes before normal shutdown, do not reuse the
-run ID. Mark that run aborted:
+If Claude Code or the terminal closes before the output can be reviewed, do not
+reuse the run ID or label it successful. Mark that run aborted:
 
 ```powershell
 uv run mcp-privprof profile abort-run `

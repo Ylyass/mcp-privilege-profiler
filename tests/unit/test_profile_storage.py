@@ -103,6 +103,38 @@ async def test_profile_storage_round_trips_privacy_safe_call_facts(tmp_path: Pat
 
 
 @pytest.mark.anyio
+async def test_profile_completion_rejects_unfinished_calls_atomically(tmp_path: Path) -> None:
+    """A human success label cannot hide an interrupted tool attempt."""
+    service, profile = await _create_profile(tmp_path / "state.sqlite3")
+    run = await service.start_run(
+        profile.profile_id,
+        run_id="run-incomplete",
+        scenario_id="scenario-a",
+        started_at=NOW + timedelta(minutes=1),
+    )
+    await service.begin_call(
+        run.run_id,
+        "read_fixture",
+        NOW + timedelta(minutes=2),
+    )
+
+    with pytest.raises(ValueError, match="unfinished calls"):
+        await service.finish_run(
+            run.run_id,
+            status=RunStatus.COMPLETED,
+            completed_at=NOW + timedelta(minutes=3),
+        )
+
+    stored = (await service.runs(profile.profile_id))[0]
+    assert stored.status is RunStatus.OPEN
+    await service.finish_run(
+        run.run_id,
+        status=RunStatus.ABORTED,
+        completed_at=NOW + timedelta(minutes=4),
+    )
+
+
+@pytest.mark.anyio
 async def test_profile_review_and_policy_gate_round_trip(tmp_path: Path) -> None:
     """A sealed stored profile can be reviewed once and then generate policy."""
     service, profile = await _create_profile(tmp_path / "state.sqlite3")

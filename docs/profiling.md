@@ -129,10 +129,17 @@ aborted-run success remains visible in totals but does not strengthen a tier.
 The UI says `consider_allow`, not “required” or “approved.” A tool seen in call
 facts but absent from the bound catalog is marked `investigate_unlisted`.
 
-## Recovery and current boundary
+## Operator labeling, recovery, and current boundary
 
-If a host is killed so abruptly that normal cleanup cannot finish, close the
-leftover run explicitly before sealing:
+Closing an MCP connection proves only that the transport ended; it does not
+prove that the task succeeded. After reviewing the agent's output, explicitly
+label a successful run:
+
+    uv run mcp-privprof profile complete-run --run-id run-001 --confirm-success --database .mcp-privprof/state.sqlite3
+
+Completion is rejected if any recorded tool call is unfinished. If the task
+failed, the result is uncertain, or the host was interrupted before review,
+mark the run aborted instead:
 
     uv run mcp-privprof profile abort-run --run-id run-001 --database .mcp-privprof/state.sqlite3
 
