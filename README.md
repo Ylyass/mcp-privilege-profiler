@@ -1,5 +1,8 @@
 # MCP Privilege Profiler
 
+[![CI](https://github.com/Ylyass/mcp-privilege-profiler/actions/workflows/ci.yml/badge.svg)](https://github.com/Ylyass/mcp-privilege-profiler/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-4c566a.svg)](LICENSE)
+
 MCP Privilege Profiler is a task-scoped MCP stdio proxy that learns candidate
 least-privilege policies from labeled successful runs, requires human review,
 enforces exact decisions, detects tool-definition drift, and emits
@@ -9,6 +12,14 @@ Status: public pre-alpha source project. The repository is published for
 inspection, safe-lab use, and contribution. No PyPI package or versioned GitHub
 release exists yet; the package name remains provisional until the final
 trademark, confusion, and registry checks are completed.
+
+## Documentation and evidence
+
+- [Professional Word engineering report](docs/reports/MCP_Privilege_Profiler_Project_Report.docx)
+- [Web-readable engineering report](docs/engineering-report.md)
+- [Architecture](docs/architecture.md)
+- [Five-minute safe demo](docs/quickstart.md)
+- [Documentation index](docs/index.md)
 
 The implementation is locked to MCP Python SDK 2.0.0. Downstream stdio uses
 automatic current-to-legacy negotiation, disables SDK response caching, and
