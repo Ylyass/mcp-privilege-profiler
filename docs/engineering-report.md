@@ -57,11 +57,11 @@ credential-access request was denied
 by the real proxy, collected by the Wazuh agent, matched manager rule `100103` at
 level 10, indexed, and found in the dashboard under the same trace identifier.
 
-The code and automated suite have since migrated to MCP Python SDK 2.0.0, and
-the SDK v2 working-tree benchmark has passed. The remaining release work
-includes a clean-candidate benchmark, real-Claude run, live Wazuh proof, build
-and clean-clone evidence on the exact candidate, followed by hosted CI,
-external review, final package-name clearance, and public release.
+The code and automated suite have since migrated to MCP Python SDK 2.0.0. The
+clean SDK v2 benchmark, local distribution inspection, and local clean-tree
+demo pass. The remaining release work includes refreshed real-Claude and live
+Wazuh proof on the exact candidate, followed by hosted CI, independent review,
+final package-name clearance, and public release.
 
 ## 1. Problem definition
 
@@ -877,16 +877,18 @@ reviewed task that genuinely requires a write.
 - a tested one-command safe demo with three allowed calls, direct hidden-tool
   denial, downstream non-forwarding, and seven schema-valid privacy-minimized
   events; and
-- local wheel and source-distribution smoke tests plus archive inspection for
-  ignored caches, runtime state, databases, personal documents, and private-key
-  file types; and
-- a fresh local clean-tree simulation of all 194 publishable files, including
+- post-migration wheel and source-distribution smoke tests plus archive
+  inspection of 56 wheel entries and 198 source-archive entries, with no
+  ignored cache, runtime-state, database, secret-key, or personal-path matches;
+  and
+- a fresh SDK v2 clean-tree simulation of all 197 tracked files, including a
   locked installation, installed CLI startup, and the safe demo.
 
-The build, clean-tree, real-Claude, and live-Wazuh items in this list were
-completed before the SDK v2 migration. They remain useful historical evidence
-but must be regenerated from the exact release-candidate commit. The SDK v2
-benchmark passed 75/75 cases from clean commit `51cfe43`.
+The real-Claude and live-Wazuh items in this list were completed before the SDK
+v2 migration. They remain useful historical evidence but must be regenerated
+from the exact release-candidate commit. The SDK v2 benchmark passed 75/75
+cases from clean commit `51cfe43`; the post-migration build and clean-tree proofs
+also pass.
 
 ### 15.2 Not yet complete
 
@@ -897,7 +899,6 @@ benchmark passed 75/75 cases from clean commit `51cfe43`.
 - no completed public release;
 - no final trademark/domain/confusion clearance for package publication;
 - no post-SDK-v2 real-Claude or live-Wazuh acceptance run;
-- no post-SDK-v2 distribution inspection or clean-clone proof;
 - no production support commitment.
 
 ### 15.3 Publication sequence
@@ -1036,8 +1037,8 @@ These are candidates, not committed release claims.
 | 7. Enforcement | Automated SDK v2 path verified; agent rerun pending | Exact catalog, denials, constraints, limits, and private audit pass in tests |
 | 8. Limits, audit, permits | Verified | Persistent limits, fsync audit, single-use approval |
 | 9. Wazuh bridge | Static SDK v2 tests pass; live rerun pending | Earlier 22 engine cases and live alert remain historical |
-| 10. Benchmark | SDK v2 working-tree run passed | 75/75 cases; clean-candidate rerun remains |
-| 11. Publication | In progress | SDK v2 release evidence, hosted CI, clean clone, reviews, and release remain |
+| 10. Benchmark | Clean SDK v2 run passed | 75/75 cases at commit `51cfe43` |
+| 11. Publication | In progress | Local build and clean-tree proof pass; hosted CI, independent clone, reviews, and release remain |
 
 ## Appendix B. Honest project description
 
@@ -1046,7 +1047,7 @@ These are candidates, not committed release claims.
 > deny-by-default policy; hides denied tools; enforces exact constraints, limits,
 > approvals, audit, and drift checks; and emits privacy-minimized events with a
 > tested Wazuh detection bridge. The SDK v2 deterministic lab and automated
-> suite pass; earlier Wazuh, benchmark, and controlled real-agent evidence must
-> be repeated for the release candidate. A source-checkout safe demo exercises
-> the enforced boundary, while hosted CI, clean-clone review, external review,
+> suite pass; earlier Wazuh and controlled real-agent evidence must be repeated
+> for the release candidate. A source-checkout safe demo exercises the enforced
+> boundary, while hosted CI, independent clean-clone review, external review,
 > and public release remain.

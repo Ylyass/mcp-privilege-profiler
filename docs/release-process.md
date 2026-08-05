@@ -22,7 +22,7 @@ Completed locally:
 - locally built wheel and source distribution smoke tests, plus archive
   inspection confirming that ignored caches, runtime state, databases, personal
   documents, and private-key file types are absent;
-- a local clean-tree simulation that copied only the 194 publishable files into
+- a post-migration clean-tree simulation that copied all 197 tracked files into
   a fresh OS-temporary directory, created a new locked environment, ran the
   installed CLI, and passed the safe demo;
 - Apache-2.0 license, notice, security policy, contribution guide, code of
@@ -33,19 +33,19 @@ Completed locally:
   CVE-2026-69247 by raising `cryptography` to 50.0.0; and
 - minimal-permission CI defined for Linux and Windows on Python 3.13 and 3.14.
 
-The real-Claude, live-Wazuh, distribution, and clean-tree items in the
-completed-local list were produced before the SDK v2 migration. They are
-retained as historical evidence, not accepted as release-candidate evidence.
-The SDK v2 benchmark passed 75/75 cases from clean commit `51cfe43`. It remains
-valid for that source revision and must be repeated if executable code or locked
-dependencies change before the final candidate.
+The real-Claude and live-Wazuh items in the completed-local list were produced
+before the SDK v2 migration. They are retained as historical evidence, not
+accepted as release-candidate evidence. The SDK v2 benchmark passed 75/75 cases
+from clean commit `51cfe43`; post-migration distribution and clean-tree checks
+also pass. The benchmark remains valid for that source revision and must be
+repeated if executable code or locked dependencies change before the final
+candidate.
 
 Still required:
 
-1. refresh the real-Claude profiling/enforcement, real Wazuh engine/live probe,
-   distribution inspection, and clean-tree proof on the SDK v2 release-candidate
-   commit, repeating the benchmark only if executable code or locked
-   dependencies change;
+1. refresh the real-Claude profiling/enforcement and real Wazuh engine/live
+   probe on the SDK v2 release-candidate commit, repeating the benchmark only
+   if executable code or locked dependencies change;
 2. finish trademark and confusion checks for package publication as described
    in the name-clearance record;
 3. enable and test GitHub private vulnerability reporting after the repository
