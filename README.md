@@ -99,11 +99,11 @@ The current verified build includes:
   privacy-minimized audit events.
 
 The code and automated suite have migrated to MCP Python SDK 2.0.0. The
-deterministic benchmark has been refreshed on the SDK v2 working tree and
-passed all 75 cases. The real-Claude, live-Wazuh, build-inspection, and
-clean-tree records listed above were produced before the migration and must be
-repeated on the exact release-candidate commit; the benchmark also needs one
-final clean-commit run. Hosted CI is defined with minimal permissions
+deterministic benchmark passed all 75 cases from clean SDK v2 commit
+`51cfe43dc21632a4fc790dd4d7c9b8a2a170600b`. The real-Claude, live-Wazuh,
+build-inspection, and clean-tree records listed above were produced before the
+migration and must be repeated on the exact final release-candidate commit.
+Hosted CI is defined with minimal permissions
 and full-SHA action pins, but it has not run because no GitHub remote is
 configured. Name clearance, refreshed acceptance evidence, the first hosted
 run, external review, and release publication remain.

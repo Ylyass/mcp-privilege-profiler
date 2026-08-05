@@ -504,14 +504,13 @@ This proves one specific local pipeline, not a production deployment.
 | Wazuh static fixtures | Contract and rule graph | 22/22 passed |
 | Real `wazuh-logtest` | Actual Wazuh 4.14.6 rule engine | 22/22 passed before SDK v2; release-candidate rerun required |
 | Live Wazuh ingestion | Proxy -> agent -> manager -> indexer | Passed before SDK v2 for rule 100103; rerun required |
-| Deterministic benchmark | Security behavior and local timing | 75/75 on SDK v2 working tree; clean-candidate rerun required |
+| Deterministic benchmark | Security behavior and local timing | 75/75 from clean SDK v2 commit `51cfe43` |
 | Real AI agent acceptance | Model-driven host through the proxy | Passed before SDK v2; rerun required |
 
-After the SDK v2 migration and catalog-response race correction, the current
-Python suite recorded 161 passing tests and one expected Windows
-symlink-related skip. One release-evidence test remains intentionally red until
-the benchmark is regenerated from a clean candidate. Ruff passes and Pyright
-reports zero errors and warnings.
+After the SDK v2 migration, catalog-response race correction, and timeout-budget
+separation, the current Python suite records 163 passing tests and one expected
+Windows symlink-related skip. Ruff passes and Pyright reports zero errors and
+warnings.
 
 ### 11.2 Deterministic benchmark
 
@@ -537,16 +536,15 @@ These rates describe the published labels and scenarios only.
 
 | Measurement | Samples | p50 ms | p95 ms | p99 ms |
 |---|---:|---:|---:|---:|
-| Policy decision and constraints | 10,000 | 0.0036 | 0.4048 | 0.4871 |
-| Direct MCP tool call | 30 | 3.6911 | 7.2526 | 29.1259 |
-| Enforced MCP tool call | 30 | 26.1979 | 30.6331 | 33.9782 |
-| Measured proxy delta | 30 | 23.1002 | 26.7256 | 27.4122 |
-| Mandatory JSONL append plus fsync | 30 | 1.1434 | 1.7432 | 2.5149 |
+| Policy decision and constraints | 10,000 | 0.0037 | 0.4499 | 0.5196 |
+| Direct MCP tool call | 30 | 3.1182 | 4.9001 | 9.7694 |
+| Enforced MCP tool call | 30 | 26.4407 | 33.5494 | 38.0857 |
+| Measured proxy delta | 30 | 22.9489 | 29.5335 | 29.9775 |
+| Mandatory JSONL append plus fsync | 30 | 1.2500 | 1.5489 | 1.8467 |
 
-Startup plus complete live inventory measured 1,792.6222 ms on the SDK v2
-Windows working-tree run. The increased proxy delta includes the new fresh
-catalog revalidation before each call. Performance is machine- and
-workload-specific, and the benchmark must run again from the clean candidate.
+Startup plus complete live inventory measured 1,803.7120 ms on the clean SDK v2
+Windows run. The proxy delta includes fresh catalog revalidation before each
+call. Performance is machine- and workload-specific.
 
 ### 11.4 Dependency security and licences
 
@@ -888,8 +886,7 @@ reviewed task that genuinely requires a write.
 The build, clean-tree, real-Claude, and live-Wazuh items in this list were
 completed before the SDK v2 migration. They remain useful historical evidence
 but must be regenerated from the exact release-candidate commit. The SDK v2
-working-tree benchmark passed 75/75 cases and must be repeated once from that
-clean commit.
+benchmark passed 75/75 cases from clean commit `51cfe43`.
 
 ### 15.2 Not yet complete
 
@@ -900,7 +897,7 @@ clean commit.
 - no completed public release;
 - no final trademark/domain/confusion clearance for package publication;
 - no post-SDK-v2 real-Claude or live-Wazuh acceptance run;
-- no post-SDK-v2 release benchmark, build inspection, or clean-clone proof;
+- no post-SDK-v2 distribution inspection or clean-clone proof;
 - no production support commitment.
 
 ### 15.3 Publication sequence

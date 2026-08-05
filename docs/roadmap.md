@@ -15,7 +15,7 @@ order so later security decisions are built on verified lower layers.
 | 7. Enforcement and catalog minimization | SDK v2 automated path verified | Reviewed policy, filtered catalog, exact constraints, stable errors, and pre-request fail-closed drift work |
 | 8. Limits, audit, and permits | Verified | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
 | 9. Wazuh bridge | Static SDK v2 tests pass; live rerun pending | Decoder/rule contracts pass; earlier 22-engine-case and live delivery proof is historical |
-| 10. Benchmark and complete test matrix | SDK v2 suite and working-tree benchmark pass | 75/75 cases pass; clean-candidate benchmark rerun remains |
+| 10. Benchmark and complete test matrix | SDK v2 suite and clean benchmark pass | 75/75 cases pass from clean commit `51cfe43`; rerun if executable code changes |
 | 11. Documentation, external review, release | In progress | SDK v2 evidence refresh, dependency audit, report, hosted CI, clean clones, external reviews, package-name clearance, and publication remain |
 
 Stage 8 enforce mode keeps the Stage 7 exact catalog and constraint gates, then
@@ -39,12 +39,12 @@ Stage 10 now has a versioned deterministic suite with 30 legitimate calls, 30
 forbidden calls, 10 catalog-drift changes, and 5 overuse/approval-abuse cases.
 The runner uses the real local MCP server and installed enforcement proxy,
 production drift/limit/permit services, and all 22 Wazuh fixtures. The latest
-SDK v2 Windows working-tree reference passed all 75 cases, reduced the exposed catalog
+clean SDK v2 Windows reference at commit `51cfe43` passed all 75 cases and reduced the exposed catalog
 from 7 to 4 tools (42.86%), blocked all labeled forbidden calls with no labeled
 legitimate-call false positives, and detected every labeled drift and overuse
 case. It publishes schema-valid raw results and p50/p95/p99 timings with explicit
-machine and claim limitations. Because the working tree was dirty, the exact
-release-candidate commit must be benchmarked again before publication.
+machine and claim limitations. It must be rerun only if the final candidate's
+executable code or locked dependencies change.
 
 Stage 11 has started with a read-only GitHub Actions workflow, full-SHA action
 pins, a Linux/Windows and Python 3.13/3.14 test matrix, build smoke tests,

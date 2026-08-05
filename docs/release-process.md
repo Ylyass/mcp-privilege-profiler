@@ -36,15 +36,16 @@ Completed locally:
 The real-Claude, live-Wazuh, distribution, and clean-tree items in the
 completed-local list were produced before the SDK v2 migration. They are
 retained as historical evidence, not accepted as release-candidate evidence.
-The SDK v2 working-tree benchmark passed 75/75 cases, but its dirty-tree flag
-means it must run once more on the exact candidate commit.
+The SDK v2 benchmark passed 75/75 cases from clean commit `51cfe43`. It remains
+valid for that source revision and must be repeated if executable code or locked
+dependencies change before the final candidate.
 
 Still required:
 
-1. refresh the real-Claude profiling/enforcement,
-   real Wazuh engine/live probe, distribution inspection, and clean-tree proof
-   on the SDK v2 release-candidate commit, then repeat the benchmark from that
-   clean commit;
+1. refresh the real-Claude profiling/enforcement, real Wazuh engine/live probe,
+   distribution inspection, and clean-tree proof on the SDK v2 release-candidate
+   commit, repeating the benchmark only if executable code or locked
+   dependencies change;
 2. finish trademark and confusion checks for package publication as described
    in the name-clearance record;
 3. enable and test GitHub private vulnerability reporting after the repository
