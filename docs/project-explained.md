@@ -90,12 +90,12 @@ The local implementation already includes:
 - mandatory, fsynced JSONL audit events;
 - tool-definition drift detection;
 - a seven-tool harmless MCP lab;
-- 163 passing Python tests and one expected Windows symlink skip;
+- 164 passing Python tests and one expected Windows symlink skip;
 - a 75-case deterministic security benchmark;
 - 22 passing Wazuh 4.14.6 rule-engine cases; and
 - one live proxy-to-Wazuh alert proof.
 
-The first real model-driven profiling acceptance also passed. Claude Code used
+The post-SDK2 real model-driven profiling acceptance also passed. Claude Code used
 the safe lab in two distinct dependency-review runs. The profiler recorded six
 successful calls—two each to the three expected read-only tools—and no calls to
 the four unused tools. The evidence is sealed and still authorizes nothing.
@@ -109,7 +109,10 @@ The early sessions were controlled corrections, not product demonstrations:
 - v3 connected to the lab, but PowerShell removed the empty value in
   `--tools ""`, so the model could not discover the MCP tools; and
 - v4 passed the corrected non-empty `ToolSearch` argument, isolated the seven
-  safe tools, and completed two successful model-driven runs.
+  safe tools, and completed two successful model-driven runs; and
+- the post-SDK2 release-candidate repeat added explicit operator completion,
+  resealed fresh evidence, regenerated the reviewed policy, and passed fresh
+  direct and model-driven enforcement runs.
 
 These failed preflights are retained as engineering lessons and excluded from
 the acceptance result. Repeating the same v4 scenario a third time was cancelled
@@ -166,18 +169,21 @@ flowchart LR
     B --> C["Real Claude profiling<br/>sealed"]
     C --> D["Human review and policy<br/>completed"]
     D --> E["Enforced Claude run<br/>completed"]
-    E --> F["GitHub CI and clean clone<br/>current gate"]
-    F --> G["External review and pre-alpha<br/>release gate"]
+    E --> F["Private GitHub and hosted CI<br/>verified"]
+    F --> G["Wazuh/benchmark refresh and review<br/>current gate"]
+    G --> H["Pre-alpha release candidate"]
 ```
 
-The operator review and policy generation are complete. A direct MCP preflight
+The post-SDK2 operator review and policy generation are complete. A direct MCP preflight
 proved that only three read-only tools are visible, all four hidden tools are
 denied, exact constraints and task limits work, a denied write does not reach the
 lab, and audit/SQLite omit raw values. The final enforced Claude task also passed:
 the model saw three tools, called each exactly once, and produced six schema-valid
 privacy-minimized events. The final local quality evidence also passed. Remaining
-release engineering includes private GitHub and hosted CI, clean-clone testing,
-external review, name clearance, and a pre-alpha release candidate.
+The private GitHub repository and hosted Linux/Windows CI now pass. Remaining
+release engineering includes the post-SDK2 Wazuh and current-candidate benchmark
+refresh, independent clean-clone/security review, name clearance, release
+artifacts, and a pre-alpha release candidate.
 
 ## Documentation is the project memory
 

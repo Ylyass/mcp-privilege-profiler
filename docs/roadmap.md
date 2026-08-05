@@ -6,17 +6,17 @@ order so later security decisions are built on verified lower layers.
 | Stage | Current status | Verified result or exit dependency |
 |---|---|---|
 | 0. Correctness and repository name | Partial | Stable MCP SDK v2 baseline and `mcp-privilege-profiler` repository identifier selected; final package trademark/confusion rechecks remain |
-| 1. Repository and quality foundation | Local foundation verified; CI defined | Locked environment and local gates work; first hosted run remains |
+| 1. Repository and quality foundation | Verified locally and in hosted CI | Locked environment, full-SHA workflow pins, and Linux/Windows Python 3.13/3.14 gates pass on commit `beaa6e9` |
 | 2. Threat model, contracts, and core domain | Foundation verified | Default-deny policy and privacy event contracts exist; profile state was added in Stage 6 |
 | 3. Safe MCP lab | Verified | Deterministic tools and harmless compromised-agent scenarios |
 | 4. Transparent stdio proxy | SDK v2 verified | Current-protocol and legacy client flows, failures, pagination, cancellation, and shutdown |
 | 5. Inventory, fingerprints, and drift | Verified | Persistence, reports, live refresh component, and conservative comparison work |
-| 6. Profiling and human review | SDK v2 implementation verified; real-agent rerun pending | Earlier Claude evidence and seven explicit decisions are historical after migration |
-| 7. Enforcement and catalog minimization | SDK v2 automated path verified | Reviewed policy, filtered catalog, exact constraints, stable errors, and pre-request fail-closed drift work |
+| 6. Profiling and human review | Post-SDK2 real-agent acceptance verified | Two explicitly completed runs, sealed evidence, privacy scan, and seven human decisions passed |
+| 7. Enforcement and catalog minimization | Post-SDK2 direct and real-agent paths verified | Generated policy exposed three tools; direct negative probes and the three-call Claude task passed |
 | 8. Limits, audit, and permits | Verified | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
 | 9. Wazuh bridge | Static SDK v2 tests pass; live rerun pending | Decoder/rule contracts pass; earlier 22-engine-case and live delivery proof is historical |
-| 10. Benchmark and complete test matrix | SDK v2 suite and clean benchmark pass | 75/75 cases pass from clean commit `51cfe43`; rerun if executable code changes |
-| 11. Documentation, external review, release | In progress | Local SDK v2 report, build, and clean-tree proof pass; hosted CI, independent clones, external reviews, package-name clearance, and publication remain |
+| 10. Benchmark and complete test matrix | SDK v2 suite and historical clean benchmark pass | 75/75 cases pass from commit `51cfe43`; refresh required because later lifecycle code changed |
+| 11. Documentation, external review, release | In progress | Private GitHub staging and hosted CI pass; Wazuh/benchmark refresh, independent review, name clearance, artifacts, and publication remain |
 
 Stage 8 enforce mode keeps the Stage 7 exact catalog and constraint gates, then
 reserves reviewed per-tool limits, consumes an exact single-use approval when
@@ -53,9 +53,9 @@ Dependabot configuration, structured issue forms, a security-aware pull-request
 template, an explicit release process, and a source-checkout safe demo. The demo
 uses the real enforcement proxy, exposes three tools from a seven-tool lab,
 passes three exact read-only calls, rejects a direct hidden write-tool call
-before forwarding, and validates seven privacy-minimized events. These files
-are locally validated configuration until a GitHub remote exists and the hosted
-checks actually pass. A post-migration source build produced a 56-entry wheel
+before forwarding, and validates seven privacy-minimized events. The private
+staging repository now exists, and hosted CI passed on Linux and Windows with
+Python 3.13 and 3.14 at commit `beaa6e9`. A post-migration source build produced a 56-entry wheel
 and 198-entry source archive, both passed isolated installation smoke tests,
 and a fresh 197-file clean-tree copy passed locked installation, CLI startup,
 and the safe demo.
@@ -66,14 +66,18 @@ second scan of all 39 locked runtime packages reported zero known
 vulnerability matches. Licence metadata for the runtime graph is compatible
 with Apache-2.0. These checks must be repeated on the exact release candidate.
 
-The controlled real-Claude profiling phase also passed: two completed runs made
+The post-SDK2 controlled real-Claude profiling phase also passed: two explicitly
+completed runs made
 exactly six successful calls to the three expected read-only lab tools, no unused
 tool was called, and the sealed evidence passed a raw-value and personal-identifier
-scan. The operator then explicitly reviewed all seven tools. The generated
+scan. Its evidence fingerprint is
+`sha256:5b93f87eb9ea1c232bc51ecfca1f4f9aa03170835e76f8c63df017ae2fe46f98`.
+The operator then explicitly reviewed all seven tools. The generated
 deny-by-default policy passed a direct enforcement preflight with three visible
 tools, four direct denials, exact argument and task-limit rejection, downstream
 non-forwarding, and privacy-safe JSONL/SQLite evidence. The final enforced Claude
 run also passed: the model saw only three tools, called each exactly once, and
 produced six schema-valid privacy-minimized audit events. The current gates are
-release engineering, hosted CI, clean-clone usability, external review, and name
-clearance.
+the post-SDK2 Wazuh live refresh, current-candidate benchmark/build inspection,
+independent clean-clone and security review, final name clearance, release
+artifacts, and publication.

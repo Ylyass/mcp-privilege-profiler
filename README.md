@@ -100,13 +100,17 @@ The current verified build includes:
 
 The code and automated suite have migrated to MCP Python SDK 2.0.0. The
 deterministic benchmark passed all 75 cases from clean SDK v2 commit
-`51cfe43dc21632a4fc790dd4d7c9b8a2a170600b`. The real-Claude, live-Wazuh,
-build-inspection, and clean-tree records listed above were produced before the
-migration and must be repeated on the exact final release-candidate commit.
-Hosted CI is defined with minimal permissions
-and full-SHA action pins, but it has not run because no GitHub remote is
-configured. Name clearance, refreshed acceptance evidence, the first hosted
-run, external review, and release publication remain.
+`51cfe43dc21632a4fc790dd4d7c9b8a2a170600b`; executable lifecycle code changed
+after that commit, so the benchmark must be refreshed for the final candidate.
+Post-SDK2 real-Claude profiling and enforcement passed from clean commit
+`beaa6e9a4e382de27a385c26f433b56fd1e01f95`: two explicitly completed profile
+runs, sealed evidence, seven human decisions, a deny-by-default policy, a
+14-event direct preflight, and a six-event enforced model run. Hosted GitHub CI
+also passed on that commit across Linux and Windows with Python 3.13 and 3.14,
+including quality, security-contract, build, and distribution-smoke gates. The
+live Wazuh proof is still pre-migration evidence and must be refreshed before a
+release-candidate claim. Final name clearance, independent review, release
+artifacts, and publication also remain.
 See the [benchmark guide](docs/benchmark.md),
 [Wazuh bridge guide](docs/wazuh-bridge.md),
 [competitive landscape](docs/competitive-landscape.md),

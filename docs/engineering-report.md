@@ -59,9 +59,11 @@ level 10, indexed, and found in the dashboard under the same trace identifier.
 
 The code and automated suite have since migrated to MCP Python SDK 2.0.0. The
 clean SDK v2 benchmark, local distribution inspection, and local clean-tree
-demo pass. The remaining release work includes refreshed real-Claude and live
-Wazuh proof on the exact candidate, followed by hosted CI, independent review,
-final package-name clearance, and public release.
+demo pass. Post-SDK2 real-Claude profiling, review, direct enforcement, and
+model-driven enforcement also pass, and hosted Linux/Windows CI is green at
+commit `beaa6e9a4e382de27a385c26f433b56fd1e01f95`. The remaining release work
+includes a current-candidate benchmark and live Wazuh refresh, independent
+review, final package-name clearance, release artifacts, and publication.
 
 ## 1. Problem definition
 
@@ -504,13 +506,12 @@ This proves one specific local pipeline, not a production deployment.
 | Wazuh static fixtures | Contract and rule graph | 22/22 passed |
 | Real `wazuh-logtest` | Actual Wazuh 4.14.6 rule engine | 22/22 passed before SDK v2; release-candidate rerun required |
 | Live Wazuh ingestion | Proxy -> agent -> manager -> indexer | Passed before SDK v2 for rule 100103; rerun required |
-| Deterministic benchmark | Security behavior and local timing | 75/75 from clean SDK v2 commit `51cfe43` |
-| Real AI agent acceptance | Model-driven host through the proxy | Passed before SDK v2; rerun required |
+| Deterministic benchmark | Security behavior and local timing | 75/75 from clean SDK v2 commit `51cfe43`; refresh required after later lifecycle changes |
+| Real AI agent acceptance | Model-driven host through the proxy | Passed after SDK v2 at `beaa6e9`; two profile runs plus one enforced run |
 
-After the SDK v2 migration, catalog-response race correction, and timeout-budget
-separation, the current Python suite records 163 passing tests and one expected
-Windows symlink-related skip. Ruff passes and Pyright reports zero errors and
-warnings.
+After the SDK v2 migration and subsequent lifecycle corrections, the current
+Python suite records 164 passing tests and one expected Windows symlink-related
+skip. Ruff passes and Pyright reports zero errors and warnings.
 
 ### 11.2 Deterministic benchmark
 
@@ -732,7 +733,8 @@ For scientific validity:
 - use strict MCP configuration containing only this proxy;
 - exclude user settings and apply a dedicated restrictive settings file;
 - explicitly deny built-in Claude MCP tool names with `mcp__claude*`;
-- force the seven safe-lab schemas to load without built-in tool search;
+- mark the safe-lab tools `alwaysLoad` while retaining only the non-executing
+  `ToolSearch` discovery path;
 - disable Claude Code transcript writes for the controlled session;
 - keep normal host permission prompts;
 - use only fake fixture data;
@@ -815,7 +817,33 @@ path, advisory ID, dependency value, model result, personal identifier, or
 workstation path. A displayed follow-up suggestion was not submitted and produced
 no fourth call.
 
-### 14.4 Acceptance sequence
+### 14.4 Post-SDK2 release-candidate repeat
+
+Because the project migrated to MCP Python SDK 2.0.0 after the original v4
+workstation experiment, the model-driven evidence was repeated rather than
+carried forward as if the runtime had not changed. On 5 August 2026, clean
+commit `beaa6e9a4e382de27a385c26f433b56fd1e01f95` produced:
+
+- two explicitly operator-completed profile runs with six successful calls,
+  zero failures, zero incomplete calls, zero aborted runs, and zero calls to
+  the four unused tools;
+- sealed evidence fingerprint
+  `sha256:5b93f87eb9ea1c232bc51ecfca1f4f9aa03170835e76f8c63df017ae2fe46f98`;
+- completed review `claude-sdk2-rc1-review-001` and deny-by-default policy
+  `claude-dependency-review-sdk2-rc1-policy-001`;
+- a fresh direct enforcement preflight with three allowed calls, four hidden
+  tool denials, three argument-boundary denials, one task-limit denial, no
+  downstream write, and 14 validated privacy-minimized events; and
+- a Claude Code 2.1.222 enforcement run with exactly three allowed decisions,
+  three successful completions, one persistent counter per tool, and no fourth
+  tool call.
+
+Scans of the reports, audit JSONL, and SQLite state found none of the tested raw
+fixture paths, dependency data, advisory identifiers, personal identifiers, or
+workstation paths. The result is evidence for this deterministic local-lab task,
+not a claim that two runs prove universal necessity or production safety.
+
+### 14.5 Acceptance sequence
 
 1. Create a trusted dependency-review profile. **Completed.**
 2. Configure Claude Code to launch `mcp-privprof profile run`. **Completed.**
@@ -840,7 +868,7 @@ feature. The exact single-use approval mechanism is already covered by determini
 tests and the benchmark. A future real-agent approval test must use a separately
 reviewed task that genuinely requires a write.
 
-### 14.5 What constitutes success
+### 14.6 What constitutes success
 
 - a real model chooses the expected safe tools during profiling;
 - the same task completes through the reviewed enforcement proxy;
@@ -853,7 +881,7 @@ reviewed task that genuinely requires a write.
 
 ## 15. Open-source publication state
 
-### 15.1 Completed locally
+### 15.1 Completed in private staging
 
 - Apache-2.0 license and notice;
 - code of conduct, contributing, and security policy;
@@ -861,6 +889,8 @@ reviewed task that genuinely requires a write.
 - a focused, reviewable commit history on `main`;
 - GitHub Actions workflow with minimal permissions and full-SHA action pins;
 - Linux/Windows and Python 3.13/3.14 matrix;
+- private GitHub staging repository and a green hosted matrix at commit
+  `beaa6e9a4e382de27a385c26f433b56fd1e01f95`;
 - Dependabot, issue forms, and pull-request template;
 - selected public repository identifier, professional package metadata, and a
   GitHub private-vulnerability-reporting path;
@@ -884,33 +914,34 @@ reviewed task that genuinely requires a write.
 - a fresh SDK v2 clean-tree simulation of all 197 tracked files, including a
   locked installation, installed CLI startup, and the safe demo.
 
-The real-Claude and live-Wazuh items in this list were completed before the SDK
-v2 migration. They remain useful historical evidence but must be regenerated
-from the exact release-candidate commit. The SDK v2 benchmark passed 75/75
-cases from clean commit `51cfe43`; the post-migration build and clean-tree proofs
-also pass.
+The real-Claude evidence in this list was regenerated after the SDK v2
+migration. The real-Wazuh engine and live-ingestion records remain historical.
+The SDK v2 benchmark passed 75/75 cases from clean commit `51cfe43`, but later
+executable lifecycle changes require a current-candidate rerun. The
+post-migration build and clean-tree proofs also pass but must be refreshed for
+the final tag.
 
 ### 15.2 Not yet complete
 
-- no GitHub remote;
-- no hosted CI run;
 - no clean-clone test by another person;
 - no external security or usability review;
 - no completed public release;
 - no final trademark/domain/confusion clearance for package publication;
-- no post-SDK-v2 real-Claude or live-Wazuh acceptance run;
+- no post-SDK-v2 live-Wazuh acceptance run;
 - no production support commitment.
 
 ### 15.3 Publication sequence
 
 1. update evidence, beginner documentation, and this living report;
-2. run the complete local gates;
-3. push to a private GitHub repository;
-4. run hosted CI and a clean-clone test;
-5. perform external security and usability reviews;
+2. run the complete local gates and refresh the benchmark, build inspection,
+   dependency review, and live Wazuh proof on the candidate;
+3. push the evidence update and require hosted CI to pass;
+4. run an independent clean-clone test;
+5. perform external MCP, security, and usability reviews;
 6. complete final package-name confusion and trademark review;
-7. publish a pre-alpha release candidate with explicit limitations; and
-8. publish `v0.1.0` only after its release gates pass.
+7. produce the SBOM, checksums, and release notes;
+8. publish a pre-alpha release candidate with explicit limitations; and
+9. publish `v0.1.0` only after its release gates pass.
 
 ## 16. What was learned
 
@@ -1028,17 +1059,17 @@ These are candidates, not committed release claims.
 | Stage | Status | Evidence |
 |---|---|---|
 | 0. Correctness and provisional name | Partial | Technical baseline checked; broader name clearance remains |
-| 1. Repository and quality | Local verified | CI defined; hosted run remains |
+| 1. Repository and quality | Local and hosted verified | Linux/Windows Python 3.13/3.14 CI passes at `beaa6e9` |
 | 2. Threat model and contracts | Verified | Invariants, policy, event, and public schemas |
 | 3. Safe MCP lab | Verified | Seven harmless deterministic tools |
 | 4. Transparent proxy | Verified | Client -> proxy -> server integration |
 | 5. Inventory and drift | Verified | Persistence, reports, fingerprints, change handling |
-| 6. Profiling and review | Implementation verified; SDK v2 agent rerun pending | Earlier model-driven evidence and review remain historical |
-| 7. Enforcement | Automated SDK v2 path verified; agent rerun pending | Exact catalog, denials, constraints, limits, and private audit pass in tests |
+| 6. Profiling and review | Post-SDK2 real-agent verified | Two completed runs, sealed evidence, privacy scan, and explicit seven-tool review |
+| 7. Enforcement | Post-SDK2 direct and real-agent verified | Three visible tools, negative probes, limits, and three-call Claude task pass |
 | 8. Limits, audit, permits | Verified | Persistent limits, fsync audit, single-use approval |
 | 9. Wazuh bridge | Static SDK v2 tests pass; live rerun pending | Earlier 22 engine cases and live alert remain historical |
-| 10. Benchmark | Clean SDK v2 run passed | 75/75 cases at commit `51cfe43` |
-| 11. Publication | In progress | Local build and clean-tree proof pass; hosted CI, independent clone, reviews, and release remain |
+| 10. Benchmark | Historical clean SDK v2 run passed | 75/75 cases at `51cfe43`; rerun required after later executable changes |
+| 11. Publication | In progress | Private staging and hosted CI pass; Wazuh/benchmark refresh, independent review, artifacts, and release remain |
 
 ## Appendix B. Honest project description
 
@@ -1046,8 +1077,8 @@ These are candidates, not committed release claims.
 > stdio MCP server. It converts labeled run evidence into a human-reviewed,
 > deny-by-default policy; hides denied tools; enforces exact constraints, limits,
 > approvals, audit, and drift checks; and emits privacy-minimized events with a
-> tested Wazuh detection bridge. The SDK v2 deterministic lab and automated
-> suite pass; earlier Wazuh and controlled real-agent evidence must be repeated
-> for the release candidate. A source-checkout safe demo exercises the enforced
-> boundary, while hosted CI, independent clean-clone review, external review,
-> and public release remain.
+> tested Wazuh detection bridge. The SDK v2 deterministic lab, automated suite,
+> controlled real-agent acceptance, and hosted CI pass. The live Wazuh and
+> current-candidate benchmark evidence still require refresh. A source-checkout
+> safe demo exercises the enforced boundary, while independent clean-clone
+> review, external review, release artifacts, and public release remain.

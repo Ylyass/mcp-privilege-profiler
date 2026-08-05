@@ -4,6 +4,23 @@ All notable changes are documented here.
 
 ## Unreleased
 
+- Repeated the controlled real-Claude acceptance after the SDK 2.0.0 migration:
+  two explicitly completed profile runs produced six successful read-only calls,
+  sealed evidence fingerprint
+  `sha256:5b93f87eb9ea1c232bc51ecfca1f4f9aa03170835e76f8c63df017ae2fe46f98`,
+  and zero unused-tool calls.
+- Completed the post-SDK2 seven-tool review and generated policy
+  `claude-dependency-review-sdk2-rc1-policy-001`, then passed a fresh direct
+  enforcement preflight with three visible tools, four hidden-tool denials,
+  three argument-boundary denials, one task-limit denial, downstream
+  non-forwarding, and 14 privacy-checked events.
+- Completed a real Claude Code 2.1.222 enforcement run through the generated
+  policy: exactly three approved calls succeeded, persistent counters recorded
+  one call per tool, six `event-v1` records validated, and JSONL/SQLite scans
+  found none of the prohibited raw or personal values.
+- Passed the first hosted GitHub Actions run on Linux and Windows with Python
+  3.13 and 3.14, including quality/security contracts, the full test matrix,
+  and wheel/source-distribution smoke tests.
 - Require explicit operator confirmation before a successful profile run can
   strengthen least-privilege evidence, with atomic rejection when any tool call
   is unfinished.
