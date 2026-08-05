@@ -6,6 +6,7 @@ import json
 import sys
 from pathlib import Path
 
+from click import unstyle
 from typer.testing import CliRunner
 
 from mcp_privprof.cli import app
@@ -90,7 +91,11 @@ def test_inventory_command_rejects_non_finite_timeout_before_launch() -> None:
             "--",
             "unused-command",
         ],
+        env={"FORCE_COLOR": "1"},
     )
 
     assert result.exit_code == 2
-    assert "Usage: mcp-privprof inventory" in result.output
+    output = unstyle(result.output)
+    assert "Usage: mcp-privprof inventory" in output
+    assert "positive" in output
+    assert "finite" in output
