@@ -39,15 +39,15 @@ Completed in private staging:
 The real-Claude profile, review, direct enforcement preflight, and real-agent
 enforcement were repeated after the SDK v2 migration from clean commit
 `beaa6e9`. The earlier real-Wazuh engine and live-ingestion results remain
-historical evidence. The SDK v2 benchmark passed 75/75 cases from clean commit
-`51cfe43`, but executable profile-lifecycle code changed afterward; therefore a
-fresh benchmark and distribution inspection are required for the final
-candidate.
+historical evidence. The deterministic benchmark was refreshed after the
+executable profile-lifecycle changes and passed 75/75 cases from clean commit
+`3f7ba2a`. Distribution build and isolated wheel/source smoke tests also pass
+locally.
 
 Still required:
 
-1. refresh the real Wazuh engine/live probe and the benchmark on the final SDK
-   v2 release-candidate commit;
+1. refresh the real Wazuh engine/live probe on the final SDK v2
+   release-candidate commit;
 2. finish trademark and confusion checks for package publication as described
    in the name-clearance record;
 3. enable and test GitHub private vulnerability reporting;

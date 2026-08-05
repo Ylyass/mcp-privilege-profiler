@@ -170,7 +170,7 @@ flowchart LR
     C --> D["Human review and policy<br/>completed"]
     D --> E["Enforced Claude run<br/>completed"]
     E --> F["Private GitHub and hosted CI<br/>verified"]
-    F --> G["Wazuh/benchmark refresh and review<br/>current gate"]
+    F --> G["Wazuh refresh and external review<br/>current gate"]
     G --> H["Pre-alpha release candidate"]
 ```
 
@@ -181,9 +181,9 @@ lab, and audit/SQLite omit raw values. The final enforced Claude task also passe
 the model saw three tools, called each exactly once, and produced six schema-valid
 privacy-minimized events. The final local quality evidence also passed. Remaining
 The private GitHub repository and hosted Linux/Windows CI now pass. Remaining
-release engineering includes the post-SDK2 Wazuh and current-candidate benchmark
-refresh, independent clean-clone/security review, name clearance, release
-artifacts, and a pre-alpha release candidate.
+release engineering includes the post-SDK2 Wazuh refresh, independent
+clean-clone/security review, name clearance, release artifacts, and a pre-alpha
+release candidate. The current clean benchmark passes all 75 cases.
 
 ## Documentation is the project memory
 

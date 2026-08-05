@@ -21,6 +21,9 @@ All notable changes are documented here.
 - Passed the first hosted GitHub Actions run on Linux and Windows with Python
   3.13 and 3.14, including quality/security contracts, the full test matrix,
   and wheel/source-distribution smoke tests.
+- Refreshed the deterministic SDK 2 benchmark from clean commit `3f7ba2a`:
+  all 75 cases passed with zero false positives, zero false negatives, complete
+  drift detection, complete overuse rejection, and schema-valid raw evidence.
 - Require explicit operator confirmation before a successful profile run can
   strengthen least-privilege evidence, with atomic rejection when any tool call
   is unfinished.

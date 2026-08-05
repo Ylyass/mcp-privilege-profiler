@@ -61,9 +61,10 @@ The code and automated suite have since migrated to MCP Python SDK 2.0.0. The
 clean SDK v2 benchmark, local distribution inspection, and local clean-tree
 demo pass. Post-SDK2 real-Claude profiling, review, direct enforcement, and
 model-driven enforcement also pass, and hosted Linux/Windows CI is green at
-commit `beaa6e9a4e382de27a385c26f433b56fd1e01f95`. The remaining release work
-includes a current-candidate benchmark and live Wazuh refresh, independent
-review, final package-name clearance, release artifacts, and publication.
+commit `beaa6e9a4e382de27a385c26f433b56fd1e01f95`. The current clean benchmark
+also passes 75/75 cases at commit `3f7ba2a`. The remaining release work includes
+a live Wazuh refresh, independent review, final package-name clearance, release
+artifacts, and publication.
 
 ## 1. Problem definition
 
@@ -506,7 +507,7 @@ This proves one specific local pipeline, not a production deployment.
 | Wazuh static fixtures | Contract and rule graph | 22/22 passed |
 | Real `wazuh-logtest` | Actual Wazuh 4.14.6 rule engine | 22/22 passed before SDK v2; release-candidate rerun required |
 | Live Wazuh ingestion | Proxy -> agent -> manager -> indexer | Passed before SDK v2 for rule 100103; rerun required |
-| Deterministic benchmark | Security behavior and local timing | 75/75 from clean SDK v2 commit `51cfe43`; refresh required after later lifecycle changes |
+| Deterministic benchmark | Security behavior and local timing | 75/75 from clean post-lifecycle-correction commit `3f7ba2a` |
 | Real AI agent acceptance | Model-driven host through the proxy | Passed after SDK v2 at `beaa6e9`; two profile runs plus one enforced run |
 
 After the SDK v2 migration and subsequent lifecycle corrections, the current
@@ -915,11 +916,10 @@ reviewed task that genuinely requires a write.
   locked installation, installed CLI startup, and the safe demo.
 
 The real-Claude evidence in this list was regenerated after the SDK v2
-migration. The real-Wazuh engine and live-ingestion records remain historical.
-The SDK v2 benchmark passed 75/75 cases from clean commit `51cfe43`, but later
-executable lifecycle changes require a current-candidate rerun. The
-post-migration build and clean-tree proofs also pass but must be refreshed for
-the final tag.
+migration. The deterministic benchmark was refreshed after the executable
+lifecycle changes and passed 75/75 cases from clean commit `3f7ba2a`. The
+post-migration build and isolated wheel/source smoke tests also pass locally.
+The real-Wazuh engine and live-ingestion records remain historical.
 
 ### 15.2 Not yet complete
 
@@ -933,8 +933,8 @@ the final tag.
 ### 15.3 Publication sequence
 
 1. update evidence, beginner documentation, and this living report;
-2. run the complete local gates and refresh the benchmark, build inspection,
-   dependency review, and live Wazuh proof on the candidate;
+2. run the complete local gates and refresh the build inspection, dependency
+   review, and live Wazuh proof on the candidate;
 3. push the evidence update and require hosted CI to pass;
 4. run an independent clean-clone test;
 5. perform external MCP, security, and usability reviews;
@@ -1068,8 +1068,8 @@ These are candidates, not committed release claims.
 | 7. Enforcement | Post-SDK2 direct and real-agent verified | Three visible tools, negative probes, limits, and three-call Claude task pass |
 | 8. Limits, audit, permits | Verified | Persistent limits, fsync audit, single-use approval |
 | 9. Wazuh bridge | Static SDK v2 tests pass; live rerun pending | Earlier 22 engine cases and live alert remain historical |
-| 10. Benchmark | Historical clean SDK v2 run passed | 75/75 cases at `51cfe43`; rerun required after later executable changes |
-| 11. Publication | In progress | Private staging and hosted CI pass; Wazuh/benchmark refresh, independent review, artifacts, and release remain |
+| 10. Benchmark | Current clean SDK v2 run passed | 75/75 cases at `3f7ba2a` after lifecycle corrections |
+| 11. Publication | In progress | Private staging, hosted CI, and current benchmark pass; Wazuh refresh, independent review, artifacts, and release remain |
 
 ## Appendix B. Honest project description
 
@@ -1078,7 +1078,7 @@ These are candidates, not committed release claims.
 > deny-by-default policy; hides denied tools; enforces exact constraints, limits,
 > approvals, audit, and drift checks; and emits privacy-minimized events with a
 > tested Wazuh detection bridge. The SDK v2 deterministic lab, automated suite,
-> controlled real-agent acceptance, and hosted CI pass. The live Wazuh and
-> current-candidate benchmark evidence still require refresh. A source-checkout
+> controlled real-agent acceptance, hosted CI, and the current clean 75-case
+> benchmark pass. The live Wazuh evidence still requires refresh. A source-checkout
 > safe demo exercises the enforced boundary, while independent clean-clone
 > review, external review, release artifacts, and public release remain.

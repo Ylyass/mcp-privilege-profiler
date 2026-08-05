@@ -27,10 +27,10 @@ streams instead of the legacy standalone list-change notification. Notification
 handling remains an early signal on legacy sessions, not the only security gate.
 
 The SDK migration invalidated release claims based only on older runtime
-evidence. The automated suite and controlled real-Claude profiling/enforcement
-have now been rerun on SDK 2.0.0. Live Wazuh ingestion and the benchmark still
-must be refreshed on the final candidate because their recorded evidence either
-predates the migration or predates later executable lifecycle changes.
+evidence. The automated suite, controlled real-Claude profiling/enforcement, and
+the deterministic benchmark have now been rerun on SDK 2.0.0 after the latest
+executable lifecycle corrections. Live Wazuh ingestion still must be refreshed
+on the final candidate because its recorded evidence predates the migration.
 
 Primary references:
 

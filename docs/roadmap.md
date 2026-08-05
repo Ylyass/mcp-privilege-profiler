@@ -15,8 +15,8 @@ order so later security decisions are built on verified lower layers.
 | 7. Enforcement and catalog minimization | Post-SDK2 direct and real-agent paths verified | Generated policy exposed three tools; direct negative probes and the three-call Claude task passed |
 | 8. Limits, audit, and permits | Verified | Persistent rate/task limits, in-process concurrency, fsynced privacy audit, and exact single-use approvals work |
 | 9. Wazuh bridge | Static SDK v2 tests pass; live rerun pending | Decoder/rule contracts pass; earlier 22-engine-case and live delivery proof is historical |
-| 10. Benchmark and complete test matrix | SDK v2 suite and historical clean benchmark pass | 75/75 cases pass from commit `51cfe43`; refresh required because later lifecycle code changed |
-| 11. Documentation, external review, release | In progress | Private GitHub staging and hosted CI pass; Wazuh/benchmark refresh, independent review, name clearance, artifacts, and publication remain |
+| 10. Benchmark and complete test matrix | Current SDK v2 suite and clean benchmark pass | 75/75 cases pass from commit `3f7ba2a` after lifecycle corrections |
+| 11. Documentation, external review, release | In progress | Private GitHub staging, hosted CI, and current benchmark pass; Wazuh refresh, independent review, name clearance, artifacts, and publication remain |
 
 Stage 8 enforce mode keeps the Stage 7 exact catalog and constraint gates, then
 reserves reviewed per-tool limits, consumes an exact single-use approval when
@@ -39,7 +39,7 @@ Stage 10 now has a versioned deterministic suite with 30 legitimate calls, 30
 forbidden calls, 10 catalog-drift changes, and 5 overuse/approval-abuse cases.
 The runner uses the real local MCP server and installed enforcement proxy,
 production drift/limit/permit services, and all 22 Wazuh fixtures. The latest
-clean SDK v2 Windows reference at commit `51cfe43` passed all 75 cases and
+clean post-lifecycle-correction Windows reference at commit `3f7ba2a` passed all 75 cases and
 reduced the exposed catalog
 from 7 to 4 tools (42.86%), blocked all labeled forbidden calls with no labeled
 legitimate-call false positives, and detected every labeled drift and overuse
@@ -78,6 +78,6 @@ tools, four direct denials, exact argument and task-limit rejection, downstream
 non-forwarding, and privacy-safe JSONL/SQLite evidence. The final enforced Claude
 run also passed: the model saw only three tools, called each exactly once, and
 produced six schema-valid privacy-minimized audit events. The current gates are
-the post-SDK2 Wazuh live refresh, current-candidate benchmark/build inspection,
-independent clean-clone and security review, final name clearance, release
-artifacts, and publication.
+the post-SDK2 Wazuh live refresh, independent clean-clone and security review,
+final name clearance, release artifacts, and publication. The refreshed clean
+benchmark passes all 75 cases at commit `3f7ba2a`.

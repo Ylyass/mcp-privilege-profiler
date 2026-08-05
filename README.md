@@ -98,10 +98,10 @@ The current verified build includes:
   direct hidden-tool denial, downstream non-forwarding, and seven validated
   privacy-minimized audit events.
 
-The code and automated suite have migrated to MCP Python SDK 2.0.0. The
-deterministic benchmark passed all 75 cases from clean SDK v2 commit
-`51cfe43dc21632a4fc790dd4d7c9b8a2a170600b`; executable lifecycle code changed
-after that commit, so the benchmark must be refreshed for the final candidate.
+The code and automated suite have migrated to MCP Python SDK 2.0.0. The current
+deterministic benchmark passed all 75 cases from clean commit
+`3f7ba2ae2132bd34c645529a971648e2dfa2f2e6`, after the latest executable
+lifecycle corrections.
 Post-SDK2 real-Claude profiling and enforcement passed from clean commit
 `beaa6e9a4e382de27a385c26f433b56fd1e01f95`: two explicitly completed profile
 runs, sealed evidence, seven human decisions, a deny-by-default policy, a
