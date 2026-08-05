@@ -90,7 +90,7 @@ The local implementation already includes:
 - mandatory, fsynced JSONL audit events;
 - tool-definition drift detection;
 - a seven-tool harmless MCP lab;
-- 159 passing Python tests and one expected Windows symlink skip;
+- 161 passing Python tests and one expected Windows symlink skip;
 - a 75-case deterministic security benchmark;
 - 22 passing Wazuh 4.14.6 rule-engine cases; and
 - one live proxy-to-Wazuh alert proof.

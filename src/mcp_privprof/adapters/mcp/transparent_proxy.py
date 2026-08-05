@@ -7,7 +7,7 @@ drift behavior are deliberately added in later application-layer stages.
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
 from math import isfinite
 from pathlib import Path
@@ -17,12 +17,13 @@ import anyio
 import mcp.types as types
 from anyio.abc import ObjectReceiveStream
 from anyio.streams.memory import MemoryObjectReceiveStream
-from mcp import ClientSession, StdioServerParameters
+from mcp import ClientSession, MCPError, StdioServerParameters
+from mcp.client import Client, Transport
 from mcp.client.session import MessageHandlerFnT
 from mcp.client.stdio import stdio_client
+from mcp.server.context import ServerRequestContext
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
-from mcp.shared.exceptions import McpError
 from mcp.shared.message import SessionMessage
 
 
@@ -77,36 +78,59 @@ class ProxyContext:
     downstream: ClientSession
 
 
+async def call_downstream_tool(
+    session: ClientSession,
+    *,
+    name: str,
+    arguments: dict[str, object],
+    timeout_seconds: float,
+) -> types.CallToolResult:
+    """Call one downstream tool using the post-startup request budget."""
+    with anyio.fail_after(timeout_seconds):
+        return await session.call_tool(
+            name=name,
+            arguments=arguments,
+            read_timeout_seconds=timeout_seconds,
+        )
+
+
 @asynccontextmanager
 async def open_downstream_session(
     process: DownstreamProcess,
     *,
     message_handler: MessageHandlerFnT | None = None,
 ) -> AsyncGenerator[ClientSession]:
-    """Open and initialize one strict downstream stdio MCP session."""
+    """Open one strict downstream session with modern-to-legacy negotiation."""
     parameters = StdioServerParameters(
         command=process.command,
         args=list(process.args),
         cwd=process.cwd,
     )
+    transport = cast(Transport, _strict_stdio_transport(parameters))
+    client = Client(
+        transport,
+        mode="auto",
+        cache=None,
+        message_handler=message_handler,
+        read_timeout_seconds=process.startup_timeout_seconds,
+    )
+    async with AsyncExitStack() as stack:
+        connected = await stack.enter_async_context(client)
+        yield connected.session
+
+
+@asynccontextmanager
+async def _strict_stdio_transport(
+    parameters: StdioServerParameters,
+) -> AsyncGenerator[tuple[MemoryObjectReceiveStream[SessionMessage | Exception], object]]:
+    """Wrap SDK stdio so malformed downstream protocol data closes the session."""
     async with stdio_client(parameters) as streams:
-        # ClientSession 1.28.1 is typed against the concrete memory stream
-        # although it consumes only the ObjectReceiveStream interface.
+        source = cast(ObjectReceiveStream[SessionMessage | Exception], streams[0])
         strict_read = cast(
             MemoryObjectReceiveStream[SessionMessage | Exception],
-            StrictMessageStream(streams[0]),
+            StrictMessageStream(source),
         )
-        async with ClientSession(
-            strict_read,
-            streams[1],
-            message_handler=message_handler,
-        ) as downstream:
-            try:
-                with anyio.fail_after(process.startup_timeout_seconds):
-                    await downstream.initialize()
-            except TimeoutError as exc:
-                raise RuntimeError("downstream MCP initialization timed out") from exc
-            yield downstream
+        yield strict_read, streams[1]
 
 
 def create_transparent_proxy(
@@ -119,55 +143,74 @@ def create_transparent_proxy(
         async with open_downstream_session(process) as downstream:
             yield ProxyContext(downstream=downstream)
 
-    proxy = Server[ProxyContext](
-        name="mcp-privilege-profiler-proxy",
-        version="0.0.0",
-        instructions="Transparent stdio proxy transport proof.",
-        lifespan=lifespan,
-    )
-
     async def list_tools(
-        request: types.ListToolsRequest,
+        context: ServerRequestContext[ProxyContext],
+        params: types.PaginatedRequestParams | None,
     ) -> types.ListToolsResult:
-        """Forward tools/list, including the SDK's internal cache refresh."""
-        context = proxy.request_context.lifespan_context
-        # MCP SDK 1.28.1 requires this exact parameter annotation for request
-        # dispatch, while its call-tool cache refresh invokes the handler with
-        # None internally. Widen only after registration introspection.
-        possible_request = cast(types.ListToolsRequest | None, request)
-        if possible_request is None:
-            return await context.downstream.list_tools()
-        return await context.downstream.list_tools(params=possible_request.params)
-
-    async def call_tool(
-        name: str,
-        arguments: dict[str, object],
-    ) -> types.CallToolResult:
-        """Forward a validated tool call and preserve its complete result."""
-        context = proxy.request_context.lifespan_context
+        """Forward tools/list without caching the security-relevant catalog."""
         try:
             with anyio.fail_after(process.call_timeout_seconds):
-                return await context.downstream.call_tool(name=name, arguments=arguments)
+                return await context.lifespan_context.downstream.send_request(
+                    types.ListToolsRequest(params=params),
+                    types.ListToolsResult,
+                    request_read_timeout_seconds=process.call_timeout_seconds,
+                )
+        except TimeoutError as exc:
+            raise _proxy_mcp_error("MCP_PRIVPROF_DOWNSTREAM_TIMEOUT") from exc
+        except (
+            MCPError,
+            anyio.BrokenResourceError,
+            anyio.ClosedResourceError,
+            anyio.EndOfStream,
+        ) as exc:
+            raise _proxy_mcp_error("MCP_PRIVPROF_DOWNSTREAM_UNAVAILABLE") from exc
+
+    async def call_tool(
+        context: ServerRequestContext[ProxyContext],
+        params: types.CallToolRequestParams,
+    ) -> types.CallToolResult:
+        """Forward a validated tool call and preserve its complete result."""
+        try:
+            return await call_downstream_tool(
+                context.lifespan_context.downstream,
+                name=params.name,
+                arguments=params.arguments or {},
+                timeout_seconds=process.call_timeout_seconds,
+            )
         except TimeoutError:
             return _infrastructure_error("MCP_PRIVPROF_DOWNSTREAM_TIMEOUT")
         except (
-            McpError,
+            MCPError,
             anyio.BrokenResourceError,
             anyio.ClosedResourceError,
             anyio.EndOfStream,
         ):
             return _infrastructure_error("MCP_PRIVPROF_DOWNSTREAM_UNAVAILABLE")
 
-    proxy.list_tools()(list_tools)
-    proxy.call_tool(validate_input=True)(call_tool)
-    return proxy
+    return Server[ProxyContext](
+        name="mcp-privilege-profiler-proxy",
+        version="0.0.0",
+        instructions="Transparent stdio proxy transport proof.",
+        lifespan=lifespan,
+        on_list_tools=list_tools,
+        on_call_tool=call_tool,
+    )
 
 
 def _infrastructure_error(reason_code: str) -> types.CallToolResult:
     """Return a stable error without leaking downstream exception details."""
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=reason_code)],
-        isError=True,
+        is_error=True,
+    )
+
+
+def _proxy_mcp_error(reason_code: str) -> MCPError:
+    """Return a stable catalog error without exposing downstream details."""
+    return MCPError(
+        code=types.INTERNAL_ERROR,
+        message=reason_code,
+        data={"reason_code": reason_code},
     )
 
 

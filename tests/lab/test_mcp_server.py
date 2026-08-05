@@ -58,7 +58,7 @@ async def test_lab_server_calls_safe_fixture_tool(lab_session: ClientSession) ->
         {"relative_path": "project/requirements.txt"},
     )
 
-    assert result.isError is not True
+    assert result.is_error is not True
     assert len(result.content) == 1
     assert isinstance(result.content[0], TextContent)
     assert "demo-parser==1.2.3" in result.content[0].text

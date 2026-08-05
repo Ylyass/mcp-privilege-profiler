@@ -10,7 +10,17 @@ readme = "README.md"
 requires-python = ">=3.13,<3.15"
 license = { text = "Apache-2.0" }
 authors = [
-  { name = "MCP Privilege Profiler contributors" },
+  { name = "Ylyas Nurmuhammedov" },
+]
+maintainers = [
+  { name = "Ylyas Nurmuhammedov" },
+]
+keywords = [
+  "ai-agent-security",
+  "least-privilege",
+  "mcp",
+  "model-context-protocol",
+  "wazuh",
 ]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
@@ -23,12 +33,19 @@ classifiers = [
 dependencies = [
   "aiosqlite>=0.22.1,<0.23",
   "anyio>=4.14.2,<5",
+  "cryptography>=50.0.0,<51",
   "jsonschema>=4.26.0,<5",
-  "mcp>=1.28.1,<2",
+  "mcp>=2.0.0,<3",
   "pydantic>=2.13.4,<3",
   "rfc8785>=0.1.4,<0.2",
   "typer>=0.26.8,<0.27",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Ylyass/mcp-privilege-profiler"
+Repository = "https://github.com/Ylyass/mcp-privilege-profiler"
+Issues = "https://github.com/Ylyass/mcp-privilege-profiler/issues"
+Documentation = "https://github.com/Ylyass/mcp-privilege-profiler/tree/main/docs"
 
 [project.optional-dependencies]
 dev = [

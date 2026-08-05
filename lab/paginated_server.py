@@ -4,19 +4,21 @@ from __future__ import annotations
 
 import anyio
 import mcp.types as types
+from mcp.server.context import ServerRequestContext
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 
-server = Server(name="mcp-privilege-profiler-pagination-lab", version="0.0.0")
 
-
-async def list_tools(request: types.ListToolsRequest) -> types.ListToolsResult:
+async def list_tools(
+    _: ServerRequestContext[dict[str, object]],
+    params: types.PaginatedRequestParams | None,
+) -> types.ListToolsResult:
     """Return a deterministic two-page tool catalog."""
-    cursor = request.params.cursor if request.params is not None else None
+    cursor = params.cursor if params is not None else None
     if cursor is None:
         return types.ListToolsResult(
             tools=[_tool("page_one_tool")],
-            nextCursor="page-2",
+            next_cursor="page-2",
         )
     if cursor == "page-2":
         return types.ListToolsResult(tools=[_tool("page_two_tool")])
@@ -28,11 +30,15 @@ def _tool(name: str) -> types.Tool:
     return types.Tool(
         name=name,
         description=f"Pagination fixture {name}.",
-        inputSchema={"type": "object", "properties": {}, "additionalProperties": False},
+        input_schema={"type": "object", "properties": {}, "additionalProperties": False},
     )
 
 
-server.list_tools()(list_tools)
+server = Server[dict[str, object]](
+    name="mcp-privilege-profiler-pagination-lab",
+    version="0.0.0",
+    on_list_tools=list_tools,
+)
 
 
 async def run() -> None:

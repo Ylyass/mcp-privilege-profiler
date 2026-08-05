@@ -8,21 +8,24 @@ from pathlib import Path
 
 import anyio
 import mcp.types as types
+from mcp.server.context import ServerRequestContext
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 
-server = Server(name="mcp-privilege-profiler-forwarding-probe", version="0.0.0")
 _marker_path: Path | None = None
 
 
-async def list_tools(_: types.ListToolsRequest) -> types.ListToolsResult:
+async def list_tools(
+    _: ServerRequestContext[dict[str, object]],
+    __: types.PaginatedRequestParams | None,
+) -> types.ListToolsResult:
     """Expose one deterministic no-argument forwarding probe."""
     return types.ListToolsResult(
         tools=[
             types.Tool(
                 name="mark_forwarded",
                 description="Create a harmless test marker in the operating-system temp tree.",
-                inputSchema={
+                input_schema={
                     "type": "object",
                     "properties": {},
                     "additionalProperties": False,
@@ -32,12 +35,15 @@ async def list_tools(_: types.ListToolsRequest) -> types.ListToolsResult:
     )
 
 
-async def call_tool(name: str, _: dict[str, object]) -> types.CallToolResult:
+async def call_tool(
+    _: ServerRequestContext[dict[str, object]],
+    params: types.CallToolRequestParams,
+) -> types.CallToolResult:
     """Create the marker only if the proxy actually forwarded this call."""
-    if name != "mark_forwarded" or _marker_path is None:
+    if params.name != "mark_forwarded" or _marker_path is None:
         return types.CallToolResult(
             content=[types.TextContent(type="text", text="UNKNOWN_FIXTURE_TOOL")],
-            isError=True,
+            is_error=True,
         )
     with _marker_path.open("x", encoding="utf-8") as marker:
         marker.write("FORWARDED\n")
@@ -46,8 +52,12 @@ async def call_tool(name: str, _: dict[str, object]) -> types.CallToolResult:
     )
 
 
-server.list_tools()(list_tools)
-server.call_tool(validate_input=True)(call_tool)
+server = Server[dict[str, object]](
+    name="mcp-privilege-profiler-forwarding-probe",
+    version="0.0.0",
+    on_list_tools=list_tools,
+    on_call_tool=call_tool,
+)
 
 
 async def run(marker_path: Path) -> None:

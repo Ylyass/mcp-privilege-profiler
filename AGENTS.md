@@ -3,8 +3,8 @@
 This repository contains only MCP Privilege Profiler source code, tests,
 schemas, safe lab fixtures, and project documentation.
 
-- Do not create or store resumes, cover letters, job-application files,
-  personal records, unrelated scripts, or personal output documents here.
+- Do not create or store personal records, unrelated scripts, or artifacts from
+  another task in this repository.
 - If a request is unrelated to MCP Privilege Profiler, stop before writing and
   use a separate user-approved workspace.
 - Keep generated runtime state out of the repository. Use the existing ignored

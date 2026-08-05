@@ -27,9 +27,11 @@ tool metadata. Use a stable, unique value for each configured server.
 The database and the two report paths must be different so a report cannot
 overwrite durable history.
 
-`--startup-timeout` bounds MCP initialization. `--catalog-timeout` bounds the
-entire paginated tools/list collection, not each page separately. Timeouts must
-be positive and finite.
+`--startup-timeout` bounds each MCP handshake request. In automatic negotiation,
+the SDK may first probe the current protocol and then perform the legacy
+initialization handshake, so the total connection time can include more than
+one bounded request. `--catalog-timeout` separately bounds the entire paginated
+tools/list collection, not each page. Timeouts must be positive and finite.
 
 ## Stored evidence
 

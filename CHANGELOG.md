@@ -4,6 +4,44 @@ All notable changes are documented here.
 
 ## Unreleased
 
+- Migrated the complete proxy, lab, tests, and locked environment to the stable
+  MCP Python SDK 2.0.0 and its 2026-07-28 protocol types.
+- Switched downstream connections to SDK v2 auto negotiation, disabled the
+  SDK response cache for security-relevant catalogs, and added a verified
+  current-protocol client-to-proxy-to-server integration path.
+- Separated downstream handshake deadlines from catalog and tool-call deadlines
+  so automatic negotiation cannot shorten later authorized operations.
+- Added serialized full-catalog revalidation before each upstream
+  `tools/list` and `tools/call`. This preserves fail-closed drift enforcement
+  even when a 2026-era connection does not deliver legacy list-change
+  notifications.
+- Removed a second unvalidated catalog fetch from profile `tools/list`; the
+  host now receives the exact complete snapshot that passed revalidation.
+- Raised the transitive cryptography floor to 50.0.0 after the release audit
+  detected CVE-2026-69247 in 49.0.0, then re-scanned the locked 39-package
+  runtime graph with zero known vulnerability matches.
+- Added public project metadata for the selected GitHub repository and a
+  private-vulnerability-reporting workflow that avoids publishing a personal
+  email address.
+- Added a tested, one-command, non-Docker safe demo that runs the real
+  enforcement proxy, exposes three of seven fixture tools, completes three
+  exact allowed calls, denies a direct hidden write-tool bypass before
+  forwarding, validates seven `event-v1` records, checks raw-value absence, and
+  removes its temporary policy, audit, and database.
+- Removed Windows-only `.venv/Scripts/mcp-privprof.exe` assumptions from
+  integration tests so the declared Linux CI matrix can resolve the installed
+  console script portably.
+- Added source-checkout prerequisites, expected demo output, cleanup behavior,
+  honest claim limits, and the current core-wheel versus repository-asset
+  package boundary.
+- Documented that POSIX owner-only mode does not establish Windows NTFS ACLs
+  and that Windows operators must protect the trusted state directory.
+- Revalidated the MCP baseline on the 2026-07-28 protocol-transition date,
+  temporarily retained v1 while v2 stabilized, and later superseded that
+  boundary through the tested SDK v2 migration recorded in ADR 0010.
+- Removed a Windows subprocess-cleanup race from the hanging-startup integration
+  test while retaining the proxy's 0.1-second security timeout and a finite
+  outer test deadline.
 - Added a documented real-Claude profiling acceptance with two controlled runs,
   six expected read-only MCP calls, a sealed evidence fingerprint, and a privacy
   scan.

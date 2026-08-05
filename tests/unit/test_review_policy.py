@@ -46,7 +46,7 @@ async def _sealed_service(database_path: Path) -> ProfileService:
         [
             types.Tool(
                 name="read_fixture",
-                inputSchema={"type": "object", "properties": {}},
+                input_schema={"type": "object", "properties": {}},
             )
         ],
     )

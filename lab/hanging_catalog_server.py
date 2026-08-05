@@ -4,19 +4,25 @@ from __future__ import annotations
 
 import anyio
 import mcp.types as types
+from mcp.server.context import ServerRequestContext
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
 
-server = Server(name="mcp-privilege-profiler-hanging-catalog-lab", version="0.0.0")
 
-
-async def list_tools(_: types.ListToolsRequest) -> types.ListToolsResult:
+async def list_tools(
+    _: ServerRequestContext[dict[str, object]],
+    __: types.PaginatedRequestParams | None,
+) -> types.ListToolsResult:
     """Wait until the client cancels the intentionally unresponsive request."""
     await anyio.sleep_forever()
     raise AssertionError("sleep_forever returned unexpectedly")
 
 
-server.list_tools()(list_tools)
+server = Server[dict[str, object]](
+    name="mcp-privilege-profiler-hanging-catalog-lab",
+    version="0.0.0",
+    on_list_tools=list_tools,
+)
 
 
 async def run() -> None:

@@ -313,7 +313,7 @@ async def _run_direct_server(scenarios: tuple[CallScenario, ...]) -> DirectRun:
                     call_started = time.perf_counter_ns()
                     result = await session.call_tool(scenario.tool_name, scenario.arguments)
                     durations.append(time.perf_counter_ns() - call_started)
-                    if result.isError is True:
+                    if result.is_error is True:
                         raise AssertionError(f"direct legitimate call failed: {scenario.case_id}")
         except Exception as exc:
             raise RuntimeError(
@@ -387,7 +387,7 @@ async def _run_enforced_proxy(
                     started = time.perf_counter_ns()
                     result = await session.call_tool(scenario.tool_name, scenario.arguments)
                     durations.append(time.perf_counter_ns() - started)
-                    observed = "denied" if result.isError is True else "allowed"
+                    observed = "denied" if result.is_error is True else "allowed"
                     cases.append(
                         {
                             "case_id": scenario.case_id,
@@ -546,7 +546,7 @@ def _mutate_catalog(
             types.Tool(
                 name=target,
                 description="Deterministic added benchmark tool.",
-                inputSchema={"type": "object", "properties": {}},
+                input_schema={"type": "object", "properties": {}},
             )
         )
         return tuple(tools)

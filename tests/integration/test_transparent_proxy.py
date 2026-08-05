@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 from mcp import ClientSession, StdioServerParameters
+from mcp.client import Client
 from mcp.client.stdio import stdio_client
 from mcp.types import TextContent
 
@@ -65,7 +66,7 @@ async def test_proxy_forwards_safe_tool_call(
         {"relative_path": "project/requirements.txt"},
     )
 
-    assert result.isError is not True
+    assert result.is_error is not True
     assert len(result.content) == 1
     assert isinstance(result.content[0], TextContent)
     assert result.content[0].text == "demo-parser==1.2.3\ndemo-client==4.5.6\n"
@@ -81,7 +82,22 @@ async def test_proxy_preserves_downstream_tool_error(
         {"relative_path": "missing.txt"},
     )
 
-    assert result.isError is True
+    assert result.is_error is True
     assert len(result.content) == 1
     assert isinstance(result.content[0], TextContent)
     assert "fixture does not exist" in result.content[0].text
+
+
+@pytest.mark.anyio
+async def test_proxy_negotiates_current_protocol_with_modern_client() -> None:
+    """SDK v2 auto negotiation reaches the current protocol through stdio."""
+    parameters = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "lab.proxy"],
+        cwd=PROJECT_ROOT,
+    )
+    async with Client(stdio_client(parameters), mode="auto", cache=None) as client:
+        assert client.protocol_version == "2026-07-28"
+        result = await client.list_tools()
+
+    assert {tool.name for tool in result.tools} == EXPECTED_TOOLS

@@ -121,12 +121,18 @@ async def collect_catalog(
         raise ValueError("server_id must not be empty")
     _validate_catalog_timeout(catalog_timeout_seconds)
     with anyio.fail_after(catalog_timeout_seconds):
-        return await _collect_catalog_pages(session, server_id)
+        return await _collect_catalog_pages(
+            session,
+            server_id,
+            request_timeout_seconds=catalog_timeout_seconds,
+        )
 
 
 async def _collect_catalog_pages(
     session: ClientSession,
     server_id: str,
+    *,
+    request_timeout_seconds: float,
 ) -> CollectedCatalog:
     tools: list[types.Tool] = []
     cursor: str | None = None
@@ -134,10 +140,14 @@ async def _collect_catalog_pages(
 
     for _ in range(MAX_CATALOG_PAGES):
         params = types.PaginatedRequestParams(cursor=cursor) if cursor is not None else None
-        result = await session.list_tools(params=params)
+        result = await session.send_request(
+            types.ListToolsRequest(params=params),
+            types.ListToolsResult,
+            request_read_timeout_seconds=request_timeout_seconds,
+        )
         tools.extend(result.tools)
 
-        cursor = result.nextCursor
+        cursor = result.next_cursor
         if cursor is None:
             snapshot = snapshot_toolset(server_id=server_id, tools=tools)
             tools_by_name = {tool.name: tool for tool in tools}

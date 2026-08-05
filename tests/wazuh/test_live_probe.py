@@ -17,12 +17,12 @@ def test_probe_policy_is_complete_all_deny_and_marks_credential_risk() -> None:
             Tool(
                 name="read_fixture",
                 description="Read a safe fixture.",
-                inputSchema={"type": "object"},
+                input_schema={"type": "object"},
             ),
             Tool(
                 name="simulated_credential_read",
                 description="Return a public canary.",
-                inputSchema={"type": "object"},
+                input_schema={"type": "object"},
             ),
         ],
     )

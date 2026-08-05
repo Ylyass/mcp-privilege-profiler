@@ -78,7 +78,7 @@ def test_every_declared_catalog_mutation_is_detected() -> None:
         types.Tool(
             name=name,
             description=f"Baseline {name}",
-            inputSchema={"type": "object", "properties": {}},
+            input_schema={"type": "object", "properties": {}},
         )
         for name in names
     )

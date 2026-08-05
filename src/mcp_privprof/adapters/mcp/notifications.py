@@ -7,11 +7,9 @@ from collections.abc import Awaitable, Callable
 import anyio
 import anyio.lowlevel
 import mcp.types as types
-from mcp.shared.session import RequestResponder
+from mcp.client import IncomingMessage
 
-type ClientIncomingMessage = (
-    RequestResponder[types.ServerRequest, types.ClientResult] | types.ServerNotification | Exception
-)
+type ClientIncomingMessage = IncomingMessage
 
 
 class ToolListChangedMonitor:
@@ -24,10 +22,7 @@ class ToolListChangedMonitor:
 
     async def handle_message(self, message: ClientIncomingMessage) -> None:
         """Queue a signal without waiting for catalog I/O on the receive loop."""
-        if isinstance(message, types.ServerNotification) and isinstance(
-            message.root,
-            types.ToolListChangedNotification,
-        ):
+        if isinstance(message, types.ToolListChangedNotification):
             if self._on_signal is not None:
                 self._on_signal()
             try:

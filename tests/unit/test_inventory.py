@@ -23,7 +23,7 @@ def tool(
     return types.Tool(
         name=name,
         description=description,
-        inputSchema=input_schema
+        input_schema=input_schema
         or {"type": "object", "properties": {}, "additionalProperties": False},
     )
 
@@ -51,8 +51,8 @@ def test_complete_tool_snapshot_round_trips_known_fields() -> None:
         name="read_fixture",
         title="Read fixture",
         description="Read safe fixture data.",
-        inputSchema={"type": "object", "properties": {"path": {"type": "string"}}},
-        annotations=types.ToolAnnotations(readOnlyHint=True),
+        input_schema={"type": "object", "properties": {"path": {"type": "string"}}},
+        annotations=types.ToolAnnotations(read_only_hint=True),
     )
 
     snapshot = snapshot_tool(original)

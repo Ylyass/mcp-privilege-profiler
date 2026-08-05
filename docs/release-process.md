@@ -8,6 +8,8 @@ a public release or a production claim.
 Completed locally:
 
 - locked Python 3.13 development environment;
+- stable MCP Python SDK 2.0.0 migration with current-protocol negotiation and
+  a passing automated suite;
 - strict lint, formatting, type, and test gates;
 - deterministic benchmark with raw schema-valid evidence;
 - static and live Wazuh 4.14.6 bridge validation;
@@ -15,23 +17,47 @@ Completed locally:
   read-only MCP calls;
 - explicit human review and a successful enforced Claude task through the
   three-tool reviewed catalog;
+- a tested source-checkout safe demo with an allowed path and direct hidden-tool
+  denial;
+- locally built wheel and source distribution smoke tests, plus archive
+  inspection confirming that ignored caches, runtime state, databases, personal
+  documents, and private-key file types are absent;
+- a local clean-tree simulation that copied only the 194 publishable files into
+  a fresh OS-temporary directory, created a new locked environment, ran the
+  installed CLI, and passed the safe demo;
 - Apache-2.0 license, notice, security policy, contribution guide, code of
   conduct, issue forms, and pull-request template; and
+- selected `mcp-privilege-profiler` public repository identifier, package
+  metadata, and a documented GitHub private-reporting path; and
+- a locked-runtime vulnerability and licence review, including remediation of
+  CVE-2026-69247 by raising `cryptography` to 50.0.0; and
 - minimal-permission CI defined for Linux and Windows on Python 3.13 and 3.14.
+
+The real-Claude, live-Wazuh, distribution, and clean-tree items in the
+completed-local list were produced before the SDK v2 migration. They are
+retained as historical evidence, not accepted as release-candidate evidence.
+The SDK v2 working-tree benchmark passed 75/75 cases, but its dirty-tree flag
+means it must run once more on the exact candidate commit.
 
 Still required:
 
-1. finish trademark, confusion, domain, and final repository/package name
-   checks described in the provisional name-clearance record;
-2. configure a private vulnerability-reporting channel;
-3. push the repository and pass the first hosted CI run;
-4. enable branch protection, dependency graph, Dependabot, secret scanning,
+1. refresh the real-Claude profiling/enforcement,
+   real Wazuh engine/live probe, distribution inspection, and clean-tree proof
+   on the SDK v2 release-candidate commit, then repeat the benchmark from that
+   clean commit;
+2. finish trademark and confusion checks for package publication as described
+   in the name-clearance record;
+3. enable and test GitHub private vulnerability reporting after the repository
+   exists;
+4. push the repository and pass the first hosted CI run;
+5. enable branch protection, dependency graph, Dependabot, secret scanning,
    private vulnerability reporting, and CodeQL where GitHub supports them;
-5. review dependency licenses and generated distribution contents;
-6. pass clean-clone installation and distribution smoke tests;
-7. obtain two independent reviews, including one MCP review and one
+6. repeat the dependency vulnerability/licence review and distribution
+   inspection against the exact release-candidate commit;
+7. pass an independent GitHub clean-clone install/demo review and repeat
+   distribution smoke tests on the exact release-candidate commit;
+8. obtain two independent reviews, including one MCP review and one
    detection/security review;
-8. refresh the benchmark from the exact release-candidate commit;
 9. produce an SBOM, SHA-256 checksums, and release notes; and
 10. publish a release candidate before considering v0.1.0.
 

@@ -6,13 +6,15 @@ import json
 import sys
 from functools import partial
 from pathlib import Path
+from shutil import which
 
 import anyio
+import mcp.types as types
 import pytest
 from anyio.to_thread import run_sync as run_sync_in_worker_thread
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from mcp.shared.exceptions import McpError
+from mcp.shared.exceptions import MCPError
 from mcp.types import TextContent
 from typer.testing import CliRunner
 
@@ -23,7 +25,9 @@ from mcp_privprof.contracts.policy import PolicyV1
 from mcp_privprof.domain.profile import CallOutcome, RunStatus
 
 PROJECT_ROOT = Path(__file__).parents[2]
-CLI_EXE = PROJECT_ROOT / ".venv" / "Scripts" / "mcp-privprof.exe"
+CLI_EXE = which("mcp-privprof")
+if CLI_EXE is None:
+    raise RuntimeError("mcp-privprof console script is not available on PATH")
 
 
 @pytest.fixture
@@ -124,7 +128,7 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
                 "read_fixture",
                 {"relative_path": "project/README.md"},
             )
-            assert result.isError is not True
+            assert result.is_error is not True
             assert isinstance(result.content[0], TextContent)
             assert "Fixture project" in result.content[0].text
 
@@ -305,7 +309,7 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
                 "read_fixture",
                 {"relative_path": "project/README.md"},
             )
-            assert allowed.isError is not True
+            assert allowed.is_error is not True
             assert isinstance(allowed.content[0], TextContent)
             assert "Fixture project" in allowed.content[0].text
 
@@ -313,8 +317,8 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
                 "read_fixture",
                 {"relative_path": "../outside.txt"},
             )
-            assert traversal.isError is True
-            assert traversal.structuredContent == {
+            assert traversal.is_error is True
+            assert traversal.structured_content == {
                 "argument_name": "relative_path",
                 "constraint_kind": "path",
                 "reason_code": "MCP_PRIVPROF_CONSTRAINT_PATH_OUTSIDE_ROOT",
@@ -324,10 +328,10 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
                 "simulated_command_run",
                 {"command": "harmless fixture"},
             )
-            assert approval.isError is True
-            assert approval.structuredContent is not None
-            assert approval.structuredContent["reason_code"] == "MCP_PRIVPROF_APPROVAL_REQUIRED"
-            request_id = approval.structuredContent["request_id"]
+            assert approval.is_error is True
+            assert approval.structured_content is not None
+            assert approval.structured_content["reason_code"] == "MCP_PRIVPROF_APPROVAL_REQUIRED"
+            request_id = approval.structured_content["request_id"]
             assert isinstance(request_id, str)
 
             permit = await run_sync_in_worker_thread(
@@ -352,10 +356,10 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
                 "simulated_command_run",
                 {"command": "different harmless fixture"},
             )
-            assert changed_arguments.isError is True
-            assert changed_arguments.structuredContent is not None
+            assert changed_arguments.is_error is True
+            assert changed_arguments.structured_content is not None
             assert (
-                changed_arguments.structuredContent["reason_code"]
+                changed_arguments.structured_content["reason_code"]
                 == "MCP_PRIVPROF_APPROVAL_REQUIRED"
             )
 
@@ -363,7 +367,7 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
                 "simulated_command_run",
                 {"command": "harmless fixture"},
             )
-            assert approved.isError is not True
+            assert approved.is_error is not True
             assert isinstance(approved.content[0], TextContent)
             assert "SIMULATED_ONLY" in approved.content[0].text
 
@@ -371,18 +375,18 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
                 "simulated_command_run",
                 {"command": "harmless fixture"},
             )
-            assert used.isError is True
-            assert used.structuredContent is not None
-            assert used.structuredContent["reason_code"] == "MCP_PRIVPROF_APPROVAL_REQUIRED"
-            assert used.structuredContent["request_id"] != request_id
+            assert used.is_error is True
+            assert used.structured_content is not None
+            assert used.structured_content["reason_code"] == "MCP_PRIVPROF_APPROVAL_REQUIRED"
+            assert used.structured_content["request_id"] != request_id
 
             denied = await session.call_tool("simulated_credential_read", {})
-            assert denied.isError is True
-            assert denied.structuredContent == {"reason_code": "MCP_PRIVPROF_POLICY_DENY"}
+            assert denied.is_error is True
+            assert denied.structured_content == {"reason_code": "MCP_PRIVPROF_POLICY_DENY"}
 
             unknown = await session.call_tool("not_in_catalog", {})
-            assert unknown.isError is True
-            assert unknown.structuredContent == {"reason_code": "MCP_PRIVPROF_UNKNOWN_TOOL"}
+            assert unknown.is_error is True
+            assert unknown.structured_content == {"reason_code": "MCP_PRIVPROF_UNKNOWN_TOOL"}
 
     audit_records = [
         json.loads(line) for line in audit_log.read_text(encoding="utf-8").splitlines()
@@ -400,7 +404,7 @@ async def test_public_profile_workflow_records_reviews_and_generates_policy(
 
 @pytest.mark.anyio
 async def test_profile_proxy_invalidates_changed_catalog_before_next_call(tmp_path: Path) -> None:
-    """A tools/list_changed signal closes the exact-catalog gate immediately."""
+    """Pre-request revalidation closes the exact-catalog gate after a change."""
     database = tmp_path / "drift.sqlite3"
     runner = CliRunner()
     await _create_profile(
@@ -438,11 +442,11 @@ async def test_profile_proxy_invalidates_changed_catalog_before_next_call(tmp_pa
             ClientSession(*streams) as session,
         ):
             await session.initialize()
-            with pytest.raises(McpError, match="MCP_PRIVPROF_PROFILE_TOOLSET_DRIFT"):
+            with pytest.raises(MCPError, match="MCP_PRIVPROF_PROFILE_TOOLSET_DRIFT"):
                 await session.call_tool("change_catalog", {})
             await anyio.sleep(0.1)
             denied = await session.call_tool("before_change", {})
-            assert denied.isError is True
+            assert denied.is_error is True
             assert isinstance(denied.content[0], TextContent)
             assert denied.content[0].text == "MCP_PRIVPROF_PROFILE_TOOLSET_DRIFT"
 
@@ -453,6 +457,56 @@ async def test_profile_proxy_invalidates_changed_catalog_before_next_call(tmp_pa
         ("change_catalog", CallOutcome.SUCCESS),
         ("before_change", CallOutcome.INFRASTRUCTURE_ERROR),
     ]
+
+
+@pytest.mark.anyio
+async def test_profile_proxy_returns_the_exact_revalidated_catalog(tmp_path: Path) -> None:
+    """Profile tools/list returns one exact full snapshot, not a second fetch."""
+    database = tmp_path / "profile-list.sqlite3"
+    runner = CliRunner()
+    await _create_profile(
+        runner,
+        database,
+        profile_id="profile-exact-list",
+        scenario_id="list-catalog",
+        server_module="lab.paginated_server",
+    )
+    parameters = StdioServerParameters(
+        command=str(CLI_EXE),
+        args=[
+            "profile",
+            "run",
+            "--profile-id",
+            "profile-exact-list",
+            "--run-id",
+            "run-exact-list",
+            "--scenario-id",
+            "list-catalog",
+            "--database",
+            str(database),
+            "--cwd",
+            str(PROJECT_ROOT),
+            "--",
+            sys.executable,
+            "-m",
+            "lab.paginated_server",
+        ],
+        cwd=PROJECT_ROOT,
+    )
+
+    async with (
+        stdio_client(parameters) as streams,
+        ClientSession(*streams) as session,
+    ):
+        await session.initialize()
+        catalog = await session.list_tools()
+        with pytest.raises(MCPError, match="MCP_PRIVPROF_INVALID_CATALOG_CURSOR"):
+            await session.list_tools(
+                params=types.PaginatedRequestParams(cursor="unexpected-cursor")
+            )
+
+    assert [tool.name for tool in catalog.tools] == ["page_one_tool", "page_two_tool"]
+    assert catalog.next_cursor is None
 
 
 @pytest.mark.anyio
@@ -502,7 +556,7 @@ async def test_cancelled_profile_call_remains_an_incomplete_attempt(tmp_path: Pa
                 )
             assert cancellation.cancel_called
             recovered = await session.call_tool("immediate_echo", {"text": "still-alive"})
-            assert recovered.isError is not True
+            assert recovered.is_error is not True
 
     service = ProfileService(SqliteProfileRepository(database))
     await service.initialize()

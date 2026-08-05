@@ -26,7 +26,7 @@ does not persist their contents.
 | Technology | Job in this stage |
 |---|---|
 | Python 3.13+ | Implements the application and deterministic lab |
-| MCP Python SDK v1 | Provides the MCP client, server, and stdio protocol sessions |
+| MCP Python SDK v2 | Provides current and legacy MCP client/server sessions and protocol types |
 | AnyIO | Runs asynchronous sessions, timeouts, cancellation, and cleanup |
 | SQLite with aiosqlite | Stores inventory, labeled runs, privacy-safe call facts, and completed reviews |
 | Pydantic and JSON Schema | Reject malformed evidence, review, and policy documents |
@@ -65,9 +65,15 @@ normal result becomes `SUCCESS` or `TOOL_ERROR`; transport and timeout failures
 become `INFRASTRUCTURE_ERROR`. Cancellation leaves an incomplete attempt rather
 than inventing an outcome.
 
-The downstream catalog is collected again when the run starts. A mismatch or a
-live `notifications/tools/list_changed` signal invalidates the run's exact
-catalog gate and later calls fail closed.
+The downstream catalog is collected again when the run starts and immediately
+before every upstream `tools/list` or `tools/call`. A mismatch closes the exact
+catalog gate. A legacy `notifications/tools/list_changed` signal can invalidate
+the gate earlier, but correctness does not depend on that signal because the
+2026-07-28 protocol delivers changes through subscriptions instead.
+
+For `tools/list`, the proxy returns the exact complete snapshot that passed this
+check as one page. It does not issue a second downstream list request after
+validation, and an unexpected upstream cursor is rejected.
 
 ### 3. Seal evidence
 

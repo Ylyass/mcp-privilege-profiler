@@ -40,7 +40,7 @@ async def test_list_changed_notification_creates_a_new_durable_snapshot(tmp_path
     ):
         initialized = await session.initialize()
         assert initialized.capabilities.tools is not None
-        assert initialized.capabilities.tools.listChanged is True
+        assert initialized.capabilities.tools.list_changed is True
 
         repository = SqliteInventoryRepository(tmp_path / "inventory.sqlite3")
         service = InventoryService(McpToolsetSource(session, "changing-lab"), repository)
@@ -58,7 +58,7 @@ async def test_list_changed_notification_creates_a_new_durable_snapshot(tmp_path
         async with anyio.create_task_group() as task_group:
             task_group.start_soon(notifications.run, refresh)
             call_result = await session.call_tool("change_catalog", {})
-            assert call_result.isError is False
+            assert call_result.is_error is False
             with anyio.fail_after(5):
                 await refreshed.wait()
             await notifications.aclose()

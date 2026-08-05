@@ -3,21 +3,20 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import AsyncGenerator, Mapping
+from collections.abc import AsyncGenerator, Awaitable, Callable, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
 from uuid import uuid4
 
 import anyio
 import jsonschema
 import mcp.types as types
-from mcp import ClientSession
+from mcp import ClientSession, MCPError
+from mcp.server.context import ServerRequestContext
 from mcp.server.lowlevel import Server
 from mcp.server.stdio import stdio_server
-from mcp.shared.exceptions import McpError
 
 from mcp_privprof.adapters.approval_control import ApprovalControlServer
 from mcp_privprof.adapters.mcp.inventory import (
@@ -26,7 +25,11 @@ from mcp_privprof.adapters.mcp.inventory import (
     snapshot_tool,
 )
 from mcp_privprof.adapters.mcp.notifications import ToolListChangedMonitor
-from mcp_privprof.adapters.mcp.transparent_proxy import DownstreamProcess, open_downstream_session
+from mcp_privprof.adapters.mcp.transparent_proxy import (
+    DownstreamProcess,
+    call_downstream_tool,
+    open_downstream_session,
+)
 from mcp_privprof.application.audit import (
     ArgumentFacts,
     DriftSeverityValue,
@@ -60,6 +63,7 @@ class EnforcementProxyContext:
 
     downstream: ClientSession
     catalog: EnforcementCatalog
+    refresh_catalog: Callable[[], Awaitable[None]]
 
 
 def create_enforcement_proxy(
@@ -144,17 +148,19 @@ def create_enforcement_proxy(
             )
             accept_exact_catalog(observed, policy, rules, catalog)
 
+            refresh_lock = anyio.Lock()
+
             async def refresh_catalog() -> None:
-                refreshed = await collect_catalog(
-                    downstream,
-                    policy.server_id,
-                    catalog_timeout_seconds=process.call_timeout_seconds,
-                )
-                if refreshed.snapshot.fingerprint == policy.approved_toolset_fingerprint:
-                    catalog.tools = refreshed.tools
-                    catalog.valid = True
-                else:
+                async with refresh_lock:
                     catalog.valid = False
+                    refreshed = await collect_catalog(
+                        downstream,
+                        policy.server_id,
+                        catalog_timeout_seconds=process.call_timeout_seconds,
+                    )
+                    if refreshed.snapshot.fingerprint == policy.approved_toolset_fingerprint:
+                        catalog.tools = refreshed.tools
+                        catalog.valid = True
 
             if approval_control is not None:
                 await approval_control.initialize()
@@ -163,52 +169,62 @@ def create_enforcement_proxy(
                 if approval_control is not None:
                     task_group.start_soon(approval_control.serve)
                 try:
-                    yield EnforcementProxyContext(downstream=downstream, catalog=catalog)
+                    yield EnforcementProxyContext(
+                        downstream=downstream,
+                        catalog=catalog,
+                        refresh_catalog=refresh_catalog,
+                    )
                 finally:
                     await notifications.aclose()
                     if approval_control is not None:
                         await approval_control.aclose()
 
-    proxy = Server[EnforcementProxyContext](
-        name="mcp-privilege-profiler-enforcement-proxy",
-        version="0.0.0",
-        instructions="Reviewed, audited, bounded, deny-by-default MCP enforcement boundary.",
-        lifespan=lifespan,
-    )
-
-    async def list_tools(request: types.ListToolsRequest) -> types.ListToolsResult:
+    async def list_tools(
+        context: ServerRequestContext[EnforcementProxyContext],
+        params: types.PaginatedRequestParams | None,
+    ) -> types.ListToolsResult:
         """Return one filtered page only while catalog and audit remain healthy."""
-        context = proxy.request_context.lifespan_context
-        if not context.catalog.audit_valid:
+        state = context.lifespan_context
+        if not state.catalog.audit_valid:
             raise _enforcement_mcp_error("MCP_PRIVPROF_AUDIT_UNAVAILABLE")
-        if not context.catalog.valid:
+        try:
+            await state.refresh_catalog()
+        except (
+            TimeoutError,
+            MCPError,
+            anyio.BrokenResourceError,
+            anyio.ClosedResourceError,
+            anyio.EndOfStream,
+        ) as exc:
+            raise _enforcement_mcp_error("MCP_PRIVPROF_DOWNSTREAM_UNAVAILABLE") from exc
+        if not state.catalog.valid:
             raise _enforcement_mcp_error("MCP_PRIVPROF_POLICY_TOOLSET_DRIFT")
-        possible_request = cast(types.ListToolsRequest | None, request)
-        if (
-            possible_request is not None
-            and possible_request.params is not None
-            and possible_request.params.cursor is not None
-        ):
+        if params is not None and params.cursor is not None:
             raise _enforcement_mcp_error(
                 "MCP_PRIVPROF_INVALID_CATALOG_CURSOR",
                 code=types.INVALID_PARAMS,
             )
         visible = [
             tool
-            for tool in context.catalog.tools
+            for tool in state.catalog.tools
             if rules[tool.name].effect in (PolicyEffect.ALLOW, PolicyEffect.REQUIRE_APPROVAL)
         ]
         return types.ListToolsResult(tools=visible)
 
-    async def call_tool(name: str, arguments: dict[str, object]) -> types.CallToolResult:
+    async def call_tool(
+        context: ServerRequestContext[EnforcementProxyContext],
+        params: types.CallToolRequestParams,
+    ) -> types.CallToolResult:
         """Audit, bound, approve, and forward one exact reviewed call."""
-        context = proxy.request_context.lifespan_context
+        state = context.lifespan_context
+        name = params.name
+        arguments = params.arguments or {}
         started_at = datetime.now(UTC)
         started_monotonic = anyio.current_time()
         trace_id = f"trace-{uuid4().hex}"
         rule = rules.get(name)
         facts = _argument_facts(arguments, rule)
-        if not context.catalog.audit_valid:
+        if not state.catalog.audit_valid:
             return _enforcement_error("MCP_PRIVPROF_AUDIT_UNAVAILABLE")
         if facts is None:
             return await _deny_with_audit(
@@ -223,7 +239,28 @@ def create_enforcement_proxy(
                 facts=None,
                 reason_code="MCP_PRIVPROF_ARGUMENT_CANONICALIZATION_FAILED",
             )
-        if not context.catalog.valid:
+        try:
+            await state.refresh_catalog()
+        except (
+            TimeoutError,
+            MCPError,
+            anyio.BrokenResourceError,
+            anyio.ClosedResourceError,
+            anyio.EndOfStream,
+        ):
+            return await _deny_with_audit(
+                audit_sink=audit_sink,
+                catalog=catalog,
+                identity=identity,
+                policy=policy,
+                rule=rule,
+                name=name,
+                trace_id=trace_id,
+                timestamp=started_at,
+                facts=facts,
+                reason_code="MCP_PRIVPROF_DOWNSTREAM_UNAVAILABLE",
+            )
+        if not state.catalog.valid:
             return await _deny_with_audit(
                 audit_sink=audit_sink,
                 catalog=catalog,
@@ -238,7 +275,7 @@ def create_enforcement_proxy(
                 drift_severity="security_widening",
             )
 
-        observed_names = {tool.name for tool in context.catalog.tools}
+        observed_names = {tool.name for tool in state.catalog.tools}
         if name not in observed_names:
             return await _deny_with_audit(
                 audit_sink=audit_sink,
@@ -287,9 +324,9 @@ def create_enforcement_proxy(
                 },
             )
 
-        tool = next(item for item in context.catalog.tools if item.name == name)
+        tool = next(item for item in state.catalog.tools if item.name == name)
         try:
-            jsonschema.validate(instance=arguments, schema=tool.inputSchema)
+            jsonschema.validate(instance=arguments, schema=tool.input_schema)
         except Exception:
             return await _deny_with_audit(
                 audit_sink=audit_sink,
@@ -414,12 +451,16 @@ def create_enforcement_proxy(
         result: types.CallToolResult
         forwarded = True
         try:
-            with anyio.fail_after(process.call_timeout_seconds):
-                result = await context.downstream.call_tool(name=name, arguments=arguments)
+            result = await call_downstream_tool(
+                state.downstream,
+                name=name,
+                arguments=arguments,
+                timeout_seconds=process.call_timeout_seconds,
+            )
         except TimeoutError:
             result = _enforcement_error("MCP_PRIVPROF_DOWNSTREAM_TIMEOUT")
         except (
-            McpError,
+            MCPError,
             RuntimeError,
             anyio.BrokenResourceError,
             anyio.ClosedResourceError,
@@ -456,9 +497,14 @@ def create_enforcement_proxy(
             logger.critical("MCP_PRIVPROF_AUDIT_COMPLETION_FAILED")
         return result
 
-    proxy.list_tools()(list_tools)
-    proxy.call_tool(validate_input=False)(call_tool)
-    return proxy
+    return Server[EnforcementProxyContext](
+        name="mcp-privilege-profiler-enforcement-proxy",
+        version="0.0.0",
+        instructions="Reviewed, audited, bounded, deny-by-default MCP enforcement boundary.",
+        lifespan=lifespan,
+        on_list_tools=list_tools,
+        on_call_tool=call_tool,
+    )
 
 
 def accept_exact_catalog(
@@ -477,7 +523,7 @@ def accept_exact_catalog(
         raise RuntimeError("MCP_PRIVPROF_POLICY_CATALOG_INCOMPLETE")
     tools_by_name = {tool.name: tool for tool in observed.tools}
     for rule in rules.values():
-        properties = tools_by_name[rule.identity.tool_name].inputSchema.get("properties")
+        properties = tools_by_name[rule.identity.tool_name].input_schema.get("properties")
         for constraint in rule.constraints:
             if not isinstance(properties, dict) or constraint.argument not in properties:
                 raise RuntimeError("MCP_PRIVPROF_POLICY_CONSTRAINT_TARGET_INVALID")
@@ -593,7 +639,7 @@ def _tool_fingerprint(catalog: EnforcementCatalog, name: str) -> str | None:
 
 
 def _completion_reason(result: types.CallToolResult) -> str:
-    if result.isError:
+    if result.is_error:
         if (
             len(result.content) == 1
             and isinstance(result.content[0], types.TextContent)
@@ -614,8 +660,8 @@ def _enforcement_error(
         structured.update({key: value for key, value in details.items() if value is not None})
     return types.CallToolResult(
         content=[types.TextContent(type="text", text=reason_code)],
-        structuredContent=structured,
-        isError=True,
+        structured_content=structured,
+        is_error=True,
     )
 
 
@@ -623,13 +669,11 @@ def _enforcement_mcp_error(
     reason_code: str,
     *,
     code: int = types.INTERNAL_ERROR,
-) -> McpError:
-    return McpError(
-        types.ErrorData(
-            code=code,
-            message=reason_code,
-            data={"reason_code": reason_code},
-        )
+) -> MCPError:
+    return MCPError(
+        code=code,
+        message=reason_code,
+        data={"reason_code": reason_code},
     )
 
 

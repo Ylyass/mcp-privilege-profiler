@@ -10,6 +10,7 @@ __pycache__/
 dist/
 build/
 site/
+~$*.docx
 coverage.xml
 htmlcov/
 .coverage

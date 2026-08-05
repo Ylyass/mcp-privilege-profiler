@@ -142,7 +142,11 @@ def enforce(
     ] = None,
     startup_timeout: Annotated[
         float,
-        typer.Option("--startup-timeout", min=0.001, help="Initialization timeout in seconds."),
+        typer.Option(
+            "--startup-timeout",
+            min=0.001,
+            help="Per-handshake-request timeout in seconds.",
+        ),
     ] = 10.0,
     call_timeout: Annotated[
         float,
@@ -261,7 +265,11 @@ def inventory(
     ] = None,
     startup_timeout: Annotated[
         float,
-        typer.Option("--startup-timeout", min=0.001, help="Initialization timeout in seconds."),
+        typer.Option(
+            "--startup-timeout",
+            min=0.001,
+            help="Per-handshake-request timeout in seconds.",
+        ),
     ] = 10.0,
     catalog_timeout: Annotated[
         float,
@@ -337,7 +345,11 @@ def profile_create(
     ] = None,
     startup_timeout: Annotated[
         float,
-        typer.Option("--startup-timeout", min=0.001, help="Initialization timeout in seconds."),
+        typer.Option(
+            "--startup-timeout",
+            min=0.001,
+            help="Per-handshake-request timeout in seconds.",
+        ),
     ] = 10.0,
     catalog_timeout: Annotated[
         float,
@@ -405,7 +417,11 @@ def profile_run(
     ] = None,
     startup_timeout: Annotated[
         float,
-        typer.Option("--startup-timeout", min=0.001, help="Initialization timeout in seconds."),
+        typer.Option(
+            "--startup-timeout",
+            min=0.001,
+            help="Per-handshake-request timeout in seconds.",
+        ),
     ] = 10.0,
     call_timeout: Annotated[
         float,

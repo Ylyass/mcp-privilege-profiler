@@ -3,7 +3,10 @@
 > Planning baseline preserved from 2026-07-14. Use
 > [roadmap.md](roadmap.md) for current verified implementation status. A
 > completed stage may differ in internal detail when tests or newer primary
-> evidence required a safer implementation.
+> evidence required a safer implementation. In particular, the original MCP
+> SDK v1 decision was superseded by [ADR 0010](adrs/0010-migrate-to-mcp-sdk-v2.md)
+> after SDK 2.0.0 became stable; do not use the old v1 instructions below as an
+> operating baseline.
 
 Status: implementation-ready plan
 Research and version check: 2026-07-14
@@ -41,7 +44,7 @@ Keep the name MCP Privilege Profiler as a temporary working name until the final
 | The built-in Wazuh JSON decoder is sufficient for routing | It parses `event-v1`, but real Wazuh 4.14.6 testing showed built-in Suricata rule 86600 claims generic JSON with `timestamp` and `event_type` first | Keep pure JSONL at rest; add a transport-only prefix and a dedicated decoder that delegates parsing to `JSON_Decoder` |
 | event_schema_version regex is valid | The proposed regex matches dots, not version 1.0 | Use an exact PCRE2 match such as ^1\.0$ or an exact scalar comparison |
 | Negative lookahead is safe in the default Wazuh regex engine | Lookaheads require PCRE2 | Prefer a scalar server_trust field; avoid clever negative regex |
-| Stable MCP and mcp==2.0.0b1 can be optional dependencies in one environment | mcp<2 and mcp==2.0.0b1 are mutually incompatible | Keep v0.1 on mcp 1.28.1; use a separate post-release RC workspace |
+| Stable MCP and mcp==2.0.0b1 can be optional dependencies in one environment | The prerelease lines were mutually incompatible | The first build stayed on v1; the project later migrated completely to stable SDK 2.0.0 under ADR 0010 |
 | Python 3.12 should be the main baseline | Python 3.12 is security-only; 3.13 is the mature maintained baseline | Develop on Python 3.13.14 and test 3.13 plus 3.14.6 |
 | Canonicalization may normalize Unicode and semantically equivalent schemas | That promise is unsafe and underspecified | Use RFC 8785 JCS; guarantee only object-key-order invariance for the same parsed JSON value |
 | “Required” means observed a minimum number of times | Observation does not prove necessity | Use available, attempted, successful, candidate-required, reviewed-required, and unobserved |
@@ -58,8 +61,8 @@ Freeze these versions in uv.lock when implementation begins. Do not automaticall
 
 | Layer | Approved baseline | Reason |
 |---|---:|---|
-| MCP specification | 2025-11-25 | Current stable protocol revision |
-| MCP Python SDK | 1.28.1, constrained to >=1.28.1,<2 | Stable v1 line; v2 remains prerelease |
+| MCP specification | 2026-07-28 with legacy fallback | Current protocol revision verified over stdio |
+| MCP Python SDK | 2.0.0, constrained to >=2,<3 | Current stable major after complete migration |
 | Python | 3.13.14 development; CI also 3.14.6 | Mature supported baseline plus forward compatibility |
 | uv | 0.11.21 | Environment, locking, builds, and publication |
 | Pydantic | 2.13.4 | Boundary validation only |
@@ -79,10 +82,8 @@ Freeze these versions in uv.lock when implementation begins. Do not automaticall
 Primary references:
 
 - MCP versioning: https://modelcontextprotocol.io/docs/learn/versioning
-- MCP 2025-11-25 basic protocol: https://modelcontextprotocol.io/specification/2025-11-25/basic
-- MCP tool contract: https://modelcontextprotocol.io/specification/2025-11-25/server/tools
-- MCP schema reference: https://modelcontextprotocol.io/specification/2025-11-25/schema
-- MCP 2026-07-28 release candidate notice: https://blog.modelcontextprotocol.io/posts/2026-07-28-release-candidate/
+- MCP 2026-07-28 specification: https://modelcontextprotocol.io/specification/2026-07-28
+- MCP Python SDK v2 migration guide: https://github.com/modelcontextprotocol/python-sdk/blob/main/docs/migration.md
 - Official Python SDK: https://github.com/modelcontextprotocol/python-sdk
 - MCP package: https://pypi.org/project/mcp/
 - RFC 8785: https://www.rfc-editor.org/rfc/rfc8785.html
@@ -698,7 +699,7 @@ Use exact scalar matches or PCRE2 explicitly. Do not attach MITRE ATLAS or OWASP
 Runtime:
 
 - Python 3.13.14;
-- official MCP Python SDK 1.28.1;
+- official MCP Python SDK 2.0.0;
 - AnyIO for cancellation, task groups, timeouts, and portable async tests;
 - Pydantic only for boundary validation;
 - stdlib dataclasses and enums in the domain;
@@ -1134,7 +1135,7 @@ Required long-form documents:
 Required ADRs:
 
 1. one downstream stdio server per proxy;
-2. stable MCP v1 only for v0.1;
+2. stable MCP v2 with auto negotiation and uncached catalog reads;
 3. launch-bound trusted task context;
 4. exact policy map with no wildcards;
 5. RFC 8785 fingerprints;
@@ -1209,7 +1210,7 @@ Use “I found no maintained implementation of this exact combination in the rev
 
 v0.2 candidates:
 
-- stable MCP v2 adapter after the final specification and SDK release;
+- explicit subscription-bus optimization while preserving pre-request drift checks;
 - separate remote Streamable HTTP proxy;
 - signed policy bundles;
 - richer policy-diff review;
@@ -1218,7 +1219,8 @@ v0.2 candidates:
 - Windows-native and macOS packaging;
 - server aggregation only after isolated-server correctness is proven.
 
-The MCP v2 experiment must be a separate subproject with its own pyproject.toml and uv.lock. Do not add mcp==2 prerelease as an extra to a project constrained to mcp<2.
+The former separate MCP v2 experiment requirement is superseded by ADR 0010.
+The active project now uses stable SDK 2.0.0 in its primary lockfile.
 
 ## 23. First build sequence
 
@@ -1240,7 +1242,8 @@ Start in this exact order:
 14. Perform two clean-clone external reviews.
 15. Publish v0.1.0 only after every release gate passes.
 
-Do not begin with a dashboard, remote deployment, AI risk classifier, or MCP v2 prerelease. The core security boundary and reproducible evidence come first.
+Do not begin with a dashboard, remote deployment, or AI risk classifier. The
+core security boundary and reproducible evidence come first.
 
 ## 24. Definition of done
 

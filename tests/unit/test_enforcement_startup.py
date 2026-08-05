@@ -25,7 +25,7 @@ def _tool(name: str) -> types.Tool:
     return types.Tool(
         name=name,
         description=f"Fixture {name}",
-        inputSchema={"type": "object", "properties": {}, "additionalProperties": False},
+        input_schema={"type": "object", "properties": {}, "additionalProperties": False},
     )
 
 

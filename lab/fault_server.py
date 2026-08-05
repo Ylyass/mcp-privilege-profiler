@@ -6,9 +6,9 @@ import os
 import sys
 
 import anyio
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
 
-mcp = FastMCP("mcp-privilege-profiler-fault-lab")
+mcp = MCPServer("mcp-privilege-profiler-fault-lab")
 
 
 @mcp.tool()

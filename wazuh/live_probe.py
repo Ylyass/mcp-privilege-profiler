@@ -184,7 +184,7 @@ async def _emit_denial(
             if visible.tools:
                 raise RuntimeError("all-deny live-probe policy exposed a tool")
             denied = await session.call_tool("simulated_credential_read", {})
-            if denied.isError is not True or denied.structuredContent != {
+            if denied.is_error is not True or denied.structured_content != {
                 "reason_code": "MCP_PRIVPROF_POLICY_DENY"
             }:
                 raise RuntimeError("live-probe credential request was not denied exactly")

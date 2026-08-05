@@ -16,7 +16,7 @@ def anyio_backend() -> str:
 
 
 def _notification() -> types.ServerNotification:
-    return types.ServerNotification(types.ToolListChangedNotification())
+    return types.ToolListChangedNotification()
 
 
 @pytest.mark.anyio

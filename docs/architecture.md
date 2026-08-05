@@ -16,6 +16,12 @@ The proxy process is both:
 The downstream command and argument list are passed directly to the process
 launcher. They are not joined into a shell command.
 
+The locked MCP Python SDK 2 client uses `mode="auto"`: it first tries the
+2026-07-28 `server/discover` lifecycle and falls back to the legacy initialize
+handshake for an older server. Its response cache is disabled because a cached
+tool catalog is not an acceptable security decision input. An integration test
+proves current-protocol negotiation across client, proxy, and lab server.
+
 ## Transparent-mode behavior
 
 The Stage 4 proxy is intentionally transparent:
@@ -97,10 +103,13 @@ completion time. Arguments and results cross the proxy in memory but have no
 profile persistence fields.
 
 At profile creation, trusted task, agent, server, and scenario labels are bound
-to a fresh inventory snapshot. At run startup, the proxy recollects the catalog
-and requires the exact same fingerprint. A live list-changed notification
-invalidates the gate immediately; a background full refresh can revalidate only
-an exact match. This prevents mixed-catalog evidence.
+to a fresh inventory snapshot. At run startup and immediately before every
+upstream list or call, the proxy recollects the complete catalog and requires
+the exact same fingerprint. A legacy list-changed notification can invalidate
+the gate earlier and trigger a background refresh, but enforcement does not
+rely on notification delivery. The refresh is serialized, and only an exact
+match can restore validity. This prevents mixed-catalog evidence across both
+legacy and 2026-era connections.
 
 Sealing is one-way and requires no open runs plus at least one completed run.
 The review input must cover every available tool exactly once and match the
@@ -164,10 +173,16 @@ pending requests and its in-memory HMAC secret. The control capability and
 permit-signing key are independent random 256-bit secrets; the signing key is
 never written to the control file.
 
-A downstream tools-list change invalidates the gate synchronously in the MCP
-message handler. A separate worker recollects the complete catalog; only the
-exact approved digest can restore validity. This avoids I/O deadlock in the
-receive loop while leaving no interval where changed definitions are trusted.
+A downstream legacy tools-list notification invalidates the gate synchronously
+in the MCP message handler. A separate worker can recollect the complete
+catalog without blocking the receive loop. Because 2026-era changes use the
+subscription model, the proxy also performs a serialized full-catalog check
+immediately before each upstream list or call. Only the exact reviewed digest
+restores validity; a changed or unavailable catalog fails closed.
+
+The profiling `tools/list` response is the complete catalog instance that just
+passed fingerprint validation. This avoids a second, unvalidated catalog fetch
+between the gate decision and the response returned to the host.
 
 ## Layer responsibilities
 

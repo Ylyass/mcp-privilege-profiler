@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from shutil import which
 
 import anyio
 import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from mcp.shared.exceptions import McpError
+from mcp.shared.exceptions import MCPError
 
 from mcp_privprof.adapters.mcp.inventory import collect_toolset
 from mcp_privprof.application.policies import policy_contract, render_policy_json
@@ -17,7 +18,9 @@ from mcp_privprof.domain import ToolLimits
 from mcp_privprof.domain.policy import Policy, PolicyEffect, PolicyRule, ToolIdentity
 
 PROJECT_ROOT = Path(__file__).parents[2]
-CLI_EXE = PROJECT_ROOT / ".venv" / "Scripts" / "mcp-privprof.exe"
+CLI_EXE = which("mcp-privprof")
+if CLI_EXE is None:
+    raise RuntimeError("mcp-privprof console script is not available on PATH")
 
 
 @pytest.fixture
@@ -99,7 +102,7 @@ async def _forwarding_probe_policy(path: Path, marker: Path) -> None:
 
 @pytest.mark.anyio
 async def test_enforcement_invalidates_catalog_change_before_next_call(tmp_path: Path) -> None:
-    """A list-changed signal closes the reviewed policy gate until exact revalidation."""
+    """Pre-request revalidation closes the reviewed policy gate after a change."""
     policy_file = tmp_path / "changing-policy.json"
     await _changing_catalog_policy(policy_file)
     parameters = StdioServerParameters(
@@ -142,19 +145,19 @@ async def test_enforcement_invalidates_catalog_change_before_next_call(tmp_path:
                 "before_change",
                 {"unexpected": True},
             )
-            assert invalid_schema.isError is True
-            assert invalid_schema.structuredContent == {
+            assert invalid_schema.is_error is True
+            assert invalid_schema.structured_content == {
                 "reason_code": "MCP_PRIVPROF_INPUT_SCHEMA_INVALID"
             }
 
             changed = await session.call_tool("change_catalog", {})
-            assert changed.isError is not True
+            assert changed.is_error is not True
             await anyio.sleep(0.1)
 
             denied = await session.call_tool("before_change", {})
-            assert denied.isError is True
-            assert denied.structuredContent == {"reason_code": "MCP_PRIVPROF_POLICY_TOOLSET_DRIFT"}
-            with pytest.raises(McpError, match="MCP_PRIVPROF_POLICY_TOOLSET_DRIFT"):
+            assert denied.is_error is True
+            assert denied.structured_content == {"reason_code": "MCP_PRIVPROF_POLICY_TOOLSET_DRIFT"}
+            with pytest.raises(MCPError, match="MCP_PRIVPROF_POLICY_TOOLSET_DRIFT"):
                 await session.list_tools()
 
 
@@ -215,15 +218,15 @@ async def test_denied_and_unapproved_calls_never_reach_downstream(
             assert {tool.name for tool in initial.tools} == expected_tools
 
             blocked = await session.call_tool("change_catalog", {})
-            assert blocked.isError is True
-            assert blocked.structuredContent is not None
-            assert blocked.structuredContent["reason_code"] == reason_code
+            assert blocked.is_error is True
+            assert blocked.structured_content is not None
+            assert blocked.structured_content["reason_code"] == reason_code
             if effect is PolicyEffect.REQUIRE_APPROVAL:
-                assert isinstance(blocked.structuredContent["request_id"], str)
-                assert isinstance(blocked.structuredContent["argument_digest"], str)
-                assert isinstance(blocked.structuredContent["expires_at"], str)
+                assert isinstance(blocked.structured_content["request_id"], str)
+                assert isinstance(blocked.structured_content["argument_digest"], str)
+                assert isinstance(blocked.structured_content["expires_at"], str)
             else:
-                assert blocked.structuredContent == {"reason_code": reason_code}
+                assert blocked.structured_content == {"reason_code": reason_code}
             await anyio.sleep(0.1)
 
             unchanged = await session.list_tools()
@@ -275,6 +278,6 @@ async def test_mandatory_audit_failure_prevents_downstream_forwarding(tmp_path: 
 
             blocked = await session.call_tool("mark_forwarded", {})
 
-            assert blocked.isError is True
-            assert blocked.structuredContent == {"reason_code": "MCP_PRIVPROF_AUDIT_WRITE_FAILED"}
+            assert blocked.is_error is True
+            assert blocked.structured_content == {"reason_code": "MCP_PRIVPROF_AUDIT_WRITE_FAILED"}
             assert not marker.exists()

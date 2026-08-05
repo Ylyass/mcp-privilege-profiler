@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
 
 from lab.tools import LabTools
 
@@ -13,7 +13,7 @@ tools = LabTools(
     fixture_root=PROJECT_ROOT / "lab" / "fixtures",
     sandbox_root=PROJECT_ROOT / "runtime" / "lab-sandbox",
 )
-mcp = FastMCP("mcp-privilege-profiler-lab")
+mcp = MCPServer("mcp-privilege-profiler-lab")
 
 
 @mcp.tool()

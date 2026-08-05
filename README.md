@@ -5,8 +5,37 @@ least-privilege policies from labeled successful runs, requires human review,
 enforces exact decisions, detects tool-definition drift, and emits
 privacy-minimized JSONL events for Wazuh.
 
-Status: pre-alpha. The name is provisional until package, repository, domain,
-and trademark checks are completed.
+Status: pre-alpha. The public repository identifier is
+`mcp-privilege-profiler`; package release remains provisional until the final
+trademark, confusion, and registry checks are completed.
+
+The implementation is locked to MCP Python SDK 2.0.0. Downstream stdio uses
+automatic current-to-legacy negotiation, disables SDK response caching, and
+revalidates the complete catalog before each upstream list or call.
+
+## Five-minute safe demo
+
+Prerequisites are Python 3.13 or 3.14, `uv`, and a source checkout. Docker,
+Wazuh, Claude, network access, and real credentials are not required.
+
+From the repository root:
+
+```text
+uv sync --locked --all-extras
+uv run --frozen python -m lab.demo
+```
+
+The demonstration starts the real local MCP lab through the enforcement proxy,
+shows that only three policy-approved read-only tools are visible, completes their
+exact allowed calls, attempts a direct call to a hidden write tool, proves that
+the proxy denied it before forwarding, and validates privacy-minimized audit
+events. Its policy, database, and audit are disposable operating-system
+temporary files.
+
+This uses deterministic demonstration policy data; it does not replace real
+profiling and explicit human review. See the
+[safe demo guide](docs/quickstart.md) for the flow, expected output, cleanup,
+package boundary, and claim limitations.
 
 ## Security boundary
 
@@ -30,7 +59,8 @@ The current verified build includes:
 - complete paginated tool inventory with RFC 8785 and SHA-256 fingerprints;
 - append-only SQLite inventory history and conservative drift classification;
 - versioned JSON and human-readable Markdown inventory reports;
-- non-blocking handling of `notifications/tools/list_changed` for long-running sessions;
+- legacy list-change notification handling plus protocol-era-independent,
+  pre-request full-catalog revalidation for long-running sessions;
 - trusted, launch-bound profiles and labeled scenario runs;
 - privacy-safe call evidence containing names, times, and outcomes only;
 - sealed evidence reports with reproducible candidate tiers;
@@ -63,16 +93,26 @@ The current verified build includes:
   values from JSONL and SQLite; and
 - a successful enforced Claude task that saw only the reviewed three-tool
   catalog, called each tool once, and produced six schema-valid
-  privacy-minimized events.
+  privacy-minimized events; and
+- a one-command, non-Docker safe demo that exercises three allowed calls, a
+  direct hidden-tool denial, downstream non-forwarding, and seven validated
+  privacy-minimized audit events.
 
-Hosted CI is now defined with minimal permissions and full-SHA action pins, but
-it has not run because no public GitHub remote is configured. Name clearance,
-the first hosted run, clean-clone testing, external review, and release
-publication remain.
+The code and automated suite have migrated to MCP Python SDK 2.0.0. The
+deterministic benchmark has been refreshed on the SDK v2 working tree and
+passed all 75 cases. The real-Claude, live-Wazuh, build-inspection, and
+clean-tree records listed above were produced before the migration and must be
+repeated on the exact release-candidate commit; the benchmark also needs one
+final clean-commit run. Hosted CI is defined with minimal permissions
+and full-SHA action pins, but it has not run because no GitHub remote is
+configured. Name clearance, refreshed acceptance evidence, the first hosted
+run, external review, and release publication remain.
 See the [benchmark guide](docs/benchmark.md),
 [Wazuh bridge guide](docs/wazuh-bridge.md),
 [competitive landscape](docs/competitive-landscape.md),
 [real-agent acceptance procedure](docs/claude-code-acceptance.md),
+[safe demo guide](docs/quickstart.md),
+[dependency security and licence review](docs/dependency-security.md),
 [plain-language project explanation](docs/project-explained.md),
 [release process](docs/release-process.md), and
 [roadmap](docs/roadmap.md) for the verified boundary.

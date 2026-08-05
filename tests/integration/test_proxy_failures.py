@@ -55,7 +55,7 @@ async def test_slow_downstream_call_returns_stable_timeout(
         {"text": "late", "delay_seconds": 1.0},
     )
 
-    assert result.isError is True
+    assert result.is_error is True
     assert error_text(list(result.content)) == "MCP_PRIVPROF_DOWNSTREAM_TIMEOUT"
 
 
@@ -72,7 +72,7 @@ async def test_upstream_cancellation_propagates_and_session_recovers(
 
     assert scope.cancel_called
     recovery = await fault_proxy_session.call_tool("immediate_echo", {"text": "still-alive"})
-    assert recovery.isError is not True
+    assert recovery.is_error is not True
     assert len(recovery.content) == 1
     assert isinstance(recovery.content[0], TextContent)
     assert recovery.content[0].text == "still-alive"
@@ -85,7 +85,7 @@ async def test_downstream_crash_returns_stable_unavailable_error(
     """A disposable child crash becomes an error rather than a proxy traceback."""
     result = await fault_proxy_session.call_tool("deliberate_child_exit", {})
 
-    assert result.isError is True
+    assert result.is_error is True
     assert error_text(list(result.content)) == "MCP_PRIVPROF_DOWNSTREAM_UNAVAILABLE"
 
 
@@ -96,5 +96,5 @@ async def test_malformed_downstream_data_fails_closed(
     """Invalid JSON-RPC bytes never pass through the security boundary."""
     result = await fault_proxy_session.call_tool("emit_malformed_and_exit", {})
 
-    assert result.isError is True
+    assert result.is_error is True
     assert error_text(list(result.content)) == "MCP_PRIVPROF_DOWNSTREAM_UNAVAILABLE"

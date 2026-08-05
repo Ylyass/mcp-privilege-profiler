@@ -101,6 +101,10 @@ Untrusted:
   occupied by MCP. The capability file is created exclusively, contains a
   random 256-bit live secret distinct from the in-memory HMAC signing key, and
   is removed only if its file identity still matches.
+- Owner-only POSIX mode is not an NTFS ACL guarantee. On Windows, secrecy of
+  the capability, policy, audit, and SQLite files depends on the trusted
+  operator selecting a parent directory with appropriately restricted Windows
+  permissions; the proxy does not configure that operating-system boundary.
 - Approval audit failure prevents permit persistence. Changed arguments,
   expiry, invalid HMAC, excessive backward clock skew, and atomic replay all
   fail closed.

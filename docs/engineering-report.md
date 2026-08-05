@@ -2,9 +2,10 @@
 
 - **Document status:** Living pre-release engineering report
 - **Report version:** 0.1-draft
-- **Evidence cut-off:** 27 July 2026
+- **Evidence cut-off:** 5 August 2026
 - **Project status:** Pre-alpha; Stage 11 open-source preparation in progress
-- **Working name:** Provisional pending final name and trademark clearance
+- **Repository name:** `mcp-privilege-profiler` selected; package publication
+  remains subject to final trademark and confusion review
 
 ## Document purpose
 
@@ -44,19 +45,23 @@ one downstream stdio MCP server. It:
 The project does not train a model and does not build a new general-purpose AI
 agent. It is a security proxy used by an existing agent host.
 
-The verified deterministic benchmark contains 75 labeled security cases. It reduced
+The committed deterministic benchmark contains 75 labeled security cases. It reduced
 the visible catalog from seven tools to four, blocked all 30 labeled forbidden
 calls, allowed all 30 labeled legitimate calls, detected all 10 labeled catalog
 changes, and rejected all five labeled overuse or approval-abuse cases. These
 numbers apply only to the deterministic lab and do not prove protection from every
 prompt injection.
 
-The live Wazuh proof also passed: one simulated credential-access request was denied
+Before the SDK v2 migration, the live Wazuh proof also passed: one simulated
+credential-access request was denied
 by the real proxy, collected by the Wazuh agent, matched manager rule `100103` at
 level 10, indexed, and found in the dashboard under the same trace identifier.
 
-The remaining release work is clean-clone usability testing, hosted CI, external
-review, final name clearance, and public release.
+The code and automated suite have since migrated to MCP Python SDK 2.0.0, and
+the SDK v2 working-tree benchmark has passed. The remaining release work
+includes a clean-candidate benchmark, real-Claude run, live Wazuh proof, build
+and clean-clone evidence on the exact candidate, followed by hosted CI,
+external review, final package-name clearance, and public release.
 
 ## 1. Problem definition
 
@@ -120,7 +125,7 @@ the project to claims that could be implemented and tested.
 | Leave denied tools visible | Filter denied tools from `tools/list` and retain call-time denial as the security boundary. |
 | Ask for approval through standard input | stdio is occupied by MCP JSON-RPC. Use a separate authenticated loopback approval channel. |
 | Redact arbitrary secrets from full arguments | Do not persist raw argument values or response bodies by default. |
-| Combine stable MCP v1 and an incompatible v2 prerelease | Keep v0.1 on the stable v1 SDK line and isolate later experiments. |
+| Combine stable MCP v1 and an incompatible v2 prerelease | Keep the first build on v1, then migrate only after v2 became stable and the complete test matrix could be rerun. |
 | Treat a scripted malicious sequence as proof of prompt injection | Label it accurately as a simulated compromised-agent call sequence. |
 | Rely on generic Wazuh JSON routing | Add a project prefix and decoder after the real Wazuh engine exposed rule-precedence collision. |
 
@@ -200,7 +205,7 @@ If a host uses multiple servers, v0.1 requires one proxy process for each server
 | Technology | Why it is used |
 |---|---|
 | Python 3.13 | Main implementation language and mature supported baseline |
-| MCP Python SDK 1.28.1 | Official stable v1 client/server sessions and protocol types |
+| MCP Python SDK 2.0.0 | Official current client/server sessions and 2026-07-28 protocol types, with legacy negotiation fallback |
 | AnyIO | Structured asynchronous sessions, cancellation, timeouts, and cleanup |
 | Pydantic | Strict validation at external JSON contract boundaries |
 | Standard-library dataclasses | Dependency-light domain model |
@@ -371,9 +376,11 @@ Drift is classified conservatively:
 - presentation field change: informational;
 - other changed fields: review required.
 
-An MCP `notifications/tools/list_changed` signal invalidates the live enforcement
-gate immediately. Background refresh may reopen the gate only if the complete digest
-still matches the approved digest.
+A legacy MCP `notifications/tools/list_changed` signal invalidates the live
+enforcement gate early. SDK v2 uses subscriptions for 2026-era catalog changes,
+so the proxy does not rely on the legacy notification: it performs a serialized
+complete-catalog refresh immediately before every upstream list or call. Only
+the exact approved digest can restore validity.
 
 ## 9. Constraints, limits, audit, and approval
 
@@ -495,13 +502,16 @@ This proves one specific local pipeline, not a production deployment.
 | Failure injection | Timeouts, malformed JSON-RPC, cancellation, dead child processes | Passed |
 | Static typing and lint | Strict types and code quality | Passed |
 | Wazuh static fixtures | Contract and rule graph | 22/22 passed |
-| Real `wazuh-logtest` | Actual Wazuh 4.14.6 rule engine | 22/22 passed |
-| Live Wazuh ingestion | Proxy -> agent -> manager -> indexer | Passed for rule 100103 |
-| Deterministic benchmark | Security behavior and local timing | 75/75 passed |
-| Real AI agent acceptance | Model-driven host through the proxy | Passed for the controlled local safe lab |
+| Real `wazuh-logtest` | Actual Wazuh 4.14.6 rule engine | 22/22 passed before SDK v2; release-candidate rerun required |
+| Live Wazuh ingestion | Proxy -> agent -> manager -> indexer | Passed before SDK v2 for rule 100103; rerun required |
+| Deterministic benchmark | Security behavior and local timing | 75/75 on SDK v2 working tree; clean-candidate rerun required |
+| Real AI agent acceptance | Model-driven host through the proxy | Passed before SDK v2; rerun required |
 
-The current Python suite recorded 159 passing tests and one expected Windows
-symlink-related skip. Ruff passed. Pyright reported zero errors and warnings.
+After the SDK v2 migration and catalog-response race correction, the current
+Python suite recorded 161 passing tests and one expected Windows
+symlink-related skip. One release-evidence test remains intentionally red until
+the benchmark is regenerated from a clean candidate. Ruff passes and Pyright
+reports zero errors and warnings.
 
 ### 11.2 Deterministic benchmark
 
@@ -527,14 +537,28 @@ These rates describe the published labels and scenarios only.
 
 | Measurement | Samples | p50 ms | p95 ms | p99 ms |
 |---|---:|---:|---:|---:|
-| Policy decision and constraints | 10,000 | 0.0032 | 0.3685 | 0.4262 |
-| Direct MCP tool call | 30 | 5.6480 | 8.3729 | 9.4963 |
-| Enforced MCP tool call | 30 | 22.2513 | 27.1740 | 27.2819 |
-| Measured proxy delta | 30 | 16.9943 | 21.2893 | 21.6339 |
-| Mandatory JSONL append plus fsync | 30 | 1.1084 | 1.2918 | 1.3804 |
+| Policy decision and constraints | 10,000 | 0.0036 | 0.4048 | 0.4871 |
+| Direct MCP tool call | 30 | 3.6911 | 7.2526 | 29.1259 |
+| Enforced MCP tool call | 30 | 26.1979 | 30.6331 | 33.9782 |
+| Measured proxy delta | 30 | 23.1002 | 26.7256 | 27.4122 |
+| Mandatory JSONL append plus fsync | 30 | 1.1434 | 1.7432 | 2.5149 |
 
-Startup plus complete live inventory measured 1,353.1788 ms on the reference
-Windows run. Performance is machine- and workload-specific.
+Startup plus complete live inventory measured 1,792.6222 ms on the SDK v2
+Windows working-tree run. The increased proxy delta includes the new fresh
+catalog revalidation before each call. Performance is machine- and
+workload-specific, and the benchmark must run again from the clean candidate.
+
+### 11.4 Dependency security and licences
+
+The locked 39-package runtime graph was exported and scanned with PyPA
+`pip-audit` on 5 August 2026. The first scan found CVE-2026-69247 in transitive
+dependency `cryptography 49.0.0`. Although the project does not call the affected
+PKCS#7 decryption functions, the runtime floor was raised to the patched 50.0.0
+release. A second scan reported zero known vulnerability matches. The direct and
+transitive runtime licence metadata was also reviewed and contained permissive
+licences compatible with the Apache-2.0 distribution. This result is a
+time-bounded advisory-database check, not proof that no unknown vulnerability
+exists.
 
 ## 12. Engineering problems encountered and resolutions
 
@@ -836,18 +860,36 @@ reviewed task that genuinely requires a write.
 - Apache-2.0 license and notice;
 - code of conduct, contributing, and security policy;
 - structured package and test layout;
-- 21 focused commits on `main`;
+- a focused, reviewable commit history on `main`;
 - GitHub Actions workflow with minimal permissions and full-SHA action pins;
 - Linux/Windows and Python 3.13/3.14 matrix;
 - Dependabot, issue forms, and pull-request template;
+- selected public repository identifier, professional package metadata, and a
+  GitHub private-vulnerability-reporting path;
+- a locked 39-package runtime graph with compatible licence metadata and zero
+  known vulnerability matches after upgrading `cryptography` to 50.0.0;
 - release process and competitive positioning;
-- local source, type, lint, test, benchmark, build, and Wazuh evidence; and
+- local SDK v2 source, type, lint, and automated test evidence; and
 - a sealed real-Claude profiling result with two completed runs and six expected
   successful MCP calls; and
 - an explicit seven-tool human review, generated deny-by-default policy, and
   passing direct enforcement preflight; and
 - a successful model-driven enforced Claude task with three exact calls and six
-  schema-valid privacy-minimized events.
+  schema-valid privacy-minimized events; and
+- a tested one-command safe demo with three allowed calls, direct hidden-tool
+  denial, downstream non-forwarding, and seven schema-valid privacy-minimized
+  events; and
+- local wheel and source-distribution smoke tests plus archive inspection for
+  ignored caches, runtime state, databases, personal documents, and private-key
+  file types; and
+- a fresh local clean-tree simulation of all 194 publishable files, including
+  locked installation, installed CLI startup, and the safe demo.
+
+The build, clean-tree, real-Claude, and live-Wazuh items in this list were
+completed before the SDK v2 migration. They remain useful historical evidence
+but must be regenerated from the exact release-candidate commit. The SDK v2
+working-tree benchmark passed 75/75 cases and must be repeated once from that
+clean commit.
 
 ### 15.2 Not yet complete
 
@@ -856,7 +898,9 @@ reviewed task that genuinely requires a write.
 - no clean-clone test by another person;
 - no external security or usability review;
 - no completed public release;
-- no final trademark/domain/confusion clearance;
+- no final trademark/domain/confusion clearance for package publication;
+- no post-SDK-v2 real-Claude or live-Wazuh acceptance run;
+- no post-SDK-v2 release benchmark, build inspection, or clean-clone proof;
 - no production support commitment.
 
 ### 15.3 Publication sequence
@@ -866,7 +910,7 @@ reviewed task that genuinely requires a write.
 3. push to a private GitHub repository;
 4. run hosted CI and a clean-clone test;
 5. perform external security and usability reviews;
-6. resolve the public name;
+6. complete final package-name confusion and trademark review;
 7. publish a pre-alpha release candidate with explicit limitations; and
 8. publish `v0.1.0` only after its release gates pass.
 
@@ -918,8 +962,6 @@ reviewed task that genuinely requires a write.
 
 ### Release blockers
 
-- one-command beginner demonstration;
-- friendly direct-bypass probe;
 - clean-clone verification;
 - hosted CI;
 - external review;
@@ -955,6 +997,7 @@ These are candidates, not committed release claims.
 | Human benchmark report | `benchmarks/results/reference-windows.md` |
 | Real-agent acceptance | `docs/claude-code-acceptance.md` |
 | Beginner explanation | `docs/project-explained.md` |
+| Safe one-command demo | `docs/quickstart.md` |
 | Architecture decisions | `docs/adrs/` |
 | Roadmap | `docs/roadmap.md` |
 | Competitive position | `docs/competitive-landscape.md` |
@@ -966,18 +1009,21 @@ These are candidates, not committed release claims.
 
 1. [Model Context Protocol, Architecture Overview](https://modelcontextprotocol.io/docs/learn/architecture)
 2. [Model Context Protocol, Security Best Practices](https://modelcontextprotocol.io/docs/tutorials/security/security_best_practices)
-3. [Model Context Protocol, stable specification baseline](https://modelcontextprotocol.io/specification/2025-11-25/basic)
+3. [Model Context Protocol, current specification baseline](https://modelcontextprotocol.io/specification/2026-07-28)
 4. [Official MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
-5. [RFC 8785, JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785.html)
-6. [JSON Schema Draft 2020-12](https://json-schema.org/draft/2020-12)
-7. [Claude Code MCP configuration](https://code.claude.com/docs/en/mcp)
-8. [Claude Code CLI reference](https://code.claude.com/docs/en/cli-reference)
-9. [Claude Code settings](https://code.claude.com/docs/en/settings)
-10. [Claude Code Chrome integration](https://code.claude.com/docs/en/chrome)
-11. [Wazuh Docker deployment](https://documentation.wazuh.com/current/deployment-options/docker/wazuh-container.html)
-12. [Wazuh custom rules](https://documentation.wazuh.com/current/user-manual/ruleset/rules/custom.html)
-13. [Wazuh rule testing](https://documentation.wazuh.com/current/user-manual/ruleset/testing.html)
-14. [Docker storage pruning](https://docs.docker.com/engine/manage-resources/pruning/)
+5. [MCP Python SDK v2 migration guide](https://github.com/modelcontextprotocol/python-sdk/blob/main/docs/migration.md)
+6. [RFC 8785, JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785.html)
+7. [JSON Schema Draft 2020-12](https://json-schema.org/draft/2020-12)
+8. [Claude Code MCP configuration](https://code.claude.com/docs/en/mcp)
+9. [Claude Code CLI reference](https://code.claude.com/docs/en/cli-reference)
+10. [Claude Code settings](https://code.claude.com/docs/en/settings)
+11. [Claude Code Chrome integration](https://code.claude.com/docs/en/chrome)
+12. [Wazuh Docker deployment](https://documentation.wazuh.com/current/deployment-options/docker/wazuh-container.html)
+13. [Wazuh custom rules](https://documentation.wazuh.com/current/user-manual/ruleset/rules/custom.html)
+14. [Wazuh rule testing](https://documentation.wazuh.com/current/user-manual/ruleset/testing.html)
+15. [Docker storage pruning](https://docs.docker.com/engine/manage-resources/pruning/)
+16. [PyPA pip-audit](https://github.com/pypa/pip-audit)
+17. [GHSA-g6cj-pr64-35w5 / CVE-2026-69247](https://github.com/advisories/GHSA-g6cj-pr64-35w5)
 
 ## Appendix A. Current stage summary
 
@@ -989,12 +1035,12 @@ These are candidates, not committed release claims.
 | 3. Safe MCP lab | Verified | Seven harmless deterministic tools |
 | 4. Transparent proxy | Verified | Client -> proxy -> server integration |
 | 5. Inventory and drift | Verified | Persistence, reports, fingerprints, change handling |
-| 6. Profiling and review | Real review completed | 2 model-driven runs, 6 expected calls, and 7 explicit operator decisions |
-| 7. Enforcement | Reviewed policy preflight passed | 3 visible tools, 4 direct denials, exact constraints, limits, and private audit |
+| 6. Profiling and review | Implementation verified; SDK v2 agent rerun pending | Earlier model-driven evidence and review remain historical |
+| 7. Enforcement | Automated SDK v2 path verified; agent rerun pending | Exact catalog, denials, constraints, limits, and private audit pass in tests |
 | 8. Limits, audit, permits | Verified | Persistent limits, fsync audit, single-use approval |
-| 9. Wazuh bridge | Verified | 22 engine cases and one live alert proof |
-| 10. Benchmark | Verified | 75/75 deterministic cases |
-| 11. Publication | In progress | Controlled real-agent acceptance passed; hosted CI, clean clone, reviews, and release remain |
+| 9. Wazuh bridge | Static SDK v2 tests pass; live rerun pending | Earlier 22 engine cases and live alert remain historical |
+| 10. Benchmark | SDK v2 working-tree run passed | 75/75 cases; clean-candidate rerun remains |
+| 11. Publication | In progress | SDK v2 release evidence, hosted CI, clean clone, reviews, and release remain |
 
 ## Appendix B. Honest project description
 
@@ -1002,7 +1048,8 @@ These are candidates, not committed release claims.
 > stdio MCP server. It converts labeled run evidence into a human-reviewed,
 > deny-by-default policy; hides denied tools; enforces exact constraints, limits,
 > approvals, audit, and drift checks; and emits privacy-minimized events with a
-> tested Wazuh detection bridge. Deterministic lab, Wazuh, benchmark, and
-> deterministic lab, Wazuh, benchmark, and controlled real-agent acceptance
-> evidence pass, while hosted CI, clean-clone review, external review, and public
-> release remain.
+> tested Wazuh detection bridge. The SDK v2 deterministic lab and automated
+> suite pass; earlier Wazuh, benchmark, and controlled real-agent evidence must
+> be repeated for the release candidate. A source-checkout safe demo exercises
+> the enforced boundary, while hosted CI, clean-clone review, external review,
+> and public release remain.

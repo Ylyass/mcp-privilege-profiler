@@ -456,13 +456,13 @@
     "architecture": "AMD64",
     "clock": "time.perf_counter_ns",
     "logical_cpus": 16,
-    "mcp_sdk": "1.28.1",
+    "mcp_sdk": "2.0.0",
     "operating_system": "Windows-11-10.0.26200-SP0",
     "processor": "AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",
     "python": "3.13.14",
     "wazuh_fixture_version": "4.14.6"
   },
-  "generated_at": "2026-07-23T08:38:13.519139Z",
+  "generated_at": "2026-08-05T06:09:20.265052Z",
   "limitations": [
     "The deterministic lab uses harmless simulated tools, not production SaaS systems.",
     "The call labels measure policy behavior; they do not prove resistance to every prompt injection.",
@@ -471,36 +471,36 @@
   ],
   "performance": {
     "audit_append": {
-      "p50_ms": 1.1084,
-      "p95_ms": 1.2918,
-      "p99_ms": 1.3804,
+      "p50_ms": 1.1434,
+      "p95_ms": 1.7432,
+      "p99_ms": 2.5149,
       "samples": 30
     },
     "direct_tool_call": {
-      "p50_ms": 5.648,
-      "p95_ms": 8.3729,
-      "p99_ms": 9.4963,
+      "p50_ms": 3.6911,
+      "p95_ms": 7.2526,
+      "p99_ms": 29.1259,
       "samples": 30
     },
     "enforced_tool_call": {
-      "p50_ms": 22.2513,
-      "p95_ms": 27.174,
-      "p99_ms": 27.2819,
+      "p50_ms": 26.1979,
+      "p95_ms": 30.6331,
+      "p99_ms": 33.9782,
       "samples": 30
     },
     "policy_decision": {
-      "p50_ms": 0.0032,
-      "p95_ms": 0.3685,
-      "p99_ms": 0.4262,
+      "p50_ms": 0.0036,
+      "p95_ms": 0.4048,
+      "p99_ms": 0.4871,
       "samples": 10000
     },
     "proxy_overhead": {
-      "p50_ms": 16.9943,
-      "p95_ms": 21.2893,
-      "p99_ms": 21.6339,
+      "p50_ms": 23.1002,
+      "p95_ms": 26.7256,
+      "p99_ms": 27.4122,
       "samples": 30
     },
-    "startup_inventory_ms": 1353.1788
+    "startup_inventory_ms": 1792.6222
   },
   "runner_version": "1.0.0",
   "scenario_counts": {
@@ -525,8 +525,8 @@
     "true_positives": 30
   },
   "source_revision": {
-    "commit": "f7b34b438cd005d8bc441608c28616057af9c51c",
-    "dirty": false
+    "commit": "ee7f40381f804cb3a5e6aa9bc5153d6922577eda",
+    "dirty": true
   },
   "suite_fingerprint": "sha256:d74eed87aa7f45153fca57f78b61af45fe7c557445f8b5fec07bcf4a2cfc5a92",
   "suite_id": "mcp-privprof-deterministic-v1",

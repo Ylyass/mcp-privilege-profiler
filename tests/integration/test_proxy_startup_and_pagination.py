@@ -10,7 +10,7 @@ import mcp.types as types
 import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
-from mcp.shared.exceptions import McpError
+from mcp.shared.exceptions import MCPError
 
 PROJECT_ROOT = Path(__file__).parents[2]
 
@@ -36,13 +36,13 @@ async def test_proxy_preserves_two_page_tool_catalog() -> None:
         await session.initialize()
         first = await session.list_tools()
         assert [tool.name for tool in first.tools] == ["page_one_tool"]
-        assert first.nextCursor == "page-2"
+        assert first.next_cursor == "page-2"
         second = await session.list_tools(
-            params=types.PaginatedRequestParams(cursor=first.nextCursor)
+            params=types.PaginatedRequestParams(cursor=first.next_cursor)
         )
 
     assert [tool.name for tool in second.tools] == ["page_two_tool"]
-    assert second.nextCursor is None
+    assert second.next_cursor is None
 
 
 @pytest.mark.anyio
@@ -54,9 +54,12 @@ async def test_hanging_downstream_startup_is_bounded() -> None:
         cwd=PROJECT_ROOT,
     )
 
-    with anyio.fail_after(6):
+    # The proxy's security timeout is 0.1 seconds. The larger outer deadline
+    # bounds SDK and Windows subprocess cleanup without racing that cleanup and
+    # replacing the expected closed-connection error with CancelledError.
+    with anyio.fail_after(15):
         with pytest.RaisesGroup(
-            pytest.RaisesExc(McpError, match="Connection closed"),
+            pytest.RaisesExc(MCPError, match="Connection closed"),
             flatten_subgroups=True,
         ):
             async with (

@@ -145,6 +145,14 @@ clock-skewed, and replayed permits fail closed. Pending raw arguments and the
 invalidates them. The approval-control file contains a separate random 256-bit
 capability secret and must remain private to the trusted local operator.
 
+On POSIX systems the implementation requests owner-only mode `0600`. Windows
+does not enforce POSIX mode bits as an NTFS access-control list. A Windows
+operator must therefore place the control file, policy, audit, and SQLite state
+inside a directory whose NTFS permissions are limited to the intended account
+and trusted administrators. The proxy does not configure or prove those parent
+directory ACLs. Treat that operating-system boundary as a deployment
+responsibility, not as an application guarantee.
+
 ## Reviewed constraints
 
 Constraints are entered in the review decision file and therefore become part
